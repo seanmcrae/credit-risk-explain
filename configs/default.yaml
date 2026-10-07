@@ -24,10 +24,12 @@ models:
 # +1: risk may only increase with the feature; -1: may only decrease.
 monotone_constraints:
   pay_status_recent: 1
+  pay_status_prev: 1
   delinquency_streak: 1
   months_delinquent: 1
   max_delay: 1
   utilization_recent: 1
+  months_zero_payment: 1
   payment_ratio_mean: -1
 
 calibration:
