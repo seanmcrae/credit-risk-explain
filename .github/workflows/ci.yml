@@ -24,7 +24,5 @@ jobs:
         run: uv run mypy
       - name: Tests
         run: uv run pytest --cov --cov-report=term-missing
-      - name: Demo on bundled synthetic sample
-        run: |
-          uv run credit-rank train --data data/sample/synthetic_credit_5k.csv --out artifacts/demo
-          uv run credit-rank rank --artifacts artifacts/demo --capacity 50
+      - name: Demo and docs site on bundled synthetic sample
+        run: make site
