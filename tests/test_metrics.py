@@ -6,6 +6,7 @@ from credit_ranking.metrics import (
     assign_deciles,
     brier,
     expected_value_curve,
+    expected_value_from_probabilities,
     ks_statistic,
     lift_table,
     precision_at_top_percent,
@@ -101,3 +102,9 @@ def test_input_validation() -> None:
         ks_statistic(np.array([0, 2]), np.array([0.1, 0.2]))
     with pytest.raises(ValueError):
         ks_statistic(np.array([0, 1]), np.array([0.1]))
+
+
+def test_prospective_expected_value_breaks_even_at_threshold() -> None:
+    econ = EconomicsConfig(cost_per_contact=60, loss_given_default=4000, cure_rate_if_worked=0.1)
+    ev = expected_value_from_probabilities(np.array([0.0, 0.15, 0.5]), econ)
+    assert ev.tolist() == pytest.approx([-60.0, 0.0, 140.0])

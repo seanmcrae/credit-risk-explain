@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-app = ["streamlit>=1.35"]
+app = ["streamlit>=1.45"]
 data = ["xlrd>=2.0"]
 dev = [
     "pytest>=8.0",
@@ -52,7 +52,7 @@ ignore = ["N803", "N806"]  # X / X_train are conventional ML names
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src"]
+files = ["src", "app"]
 
 [[tool.mypy.overrides]]
 module = ["sklearn.*", "lightgbm.*", "shap.*", "joblib.*", "pandera.*", "scipy.*"]

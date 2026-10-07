@@ -71,5 +71,6 @@ def test_figures_render(trained_run: TrainResult, tmp_path: Path) -> None:
         "reliability_curve.png",
         "expected_value.png",
         "shap_summary.png",
+        "queue_dashboard.png",
     }
     assert all(p.stat().st_size > 10_000 for p in paths)

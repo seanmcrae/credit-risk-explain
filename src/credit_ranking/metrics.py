@@ -125,6 +125,14 @@ def expected_value_curve(y: FloatArray, score: FloatArray, econ: EconomicsConfig
     return CapacityChoice(ev_curve=ev, optimal_capacity=best, optimal_value=float(ev[best]))
 
 
+def expected_value_from_probabilities(prob: FloatArray, econ: EconomicsConfig) -> FloatArray:
+    """Prospective value of working each account given its calibrated default probability.
+
+    Used for unlabeled queues: ``p * value_per_true_positive - cost_per_contact`` per account.
+    """
+    return np.asarray(prob, dtype=float) * econ.value_per_true_positive - econ.cost_per_contact
+
+
 @dataclass(frozen=True)
 class ReliabilityCurve:
     bin_mean_predicted: FloatArray
