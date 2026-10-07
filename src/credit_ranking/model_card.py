@@ -263,7 +263,25 @@ class _Card:
             f"{table(summary_headers, summary)}\n\n{table(slice_headers, slices)}\n\n"
             "Differences in priority rate mostly follow differences in observed default rate. "
             "TPR, FPR and calibration gaps are the signals that equally risky accounts are "
-            "treated differently."
+            f"treated differently.{self._largest_tpr_gap()}"
+        )
+
+    def _largest_tpr_gap(self) -> str:
+        reliable = [
+            s
+            for s in self.m["fairness_slices"]
+            if not s["small_slice"] and s["tpr_at_capacity"] is not None
+        ]
+        if not self.m["fairness_summary"] or not reliable:
+            return ""
+        worst = max(self.m["fairness_summary"], key=lambda s: s["tpr_gap"])["attribute"]
+        groups = [s for s in reliable if s["attribute"] == worst]
+        hi = max(groups, key=lambda s: s["tpr_at_capacity"])
+        lo = min(groups, key=lambda s: s["tpr_at_capacity"])
+        return (
+            f" On this run the largest TPR gap is on `{worst}`: {pct(hi['tpr_at_capacity'])} of "
+            f"defaulters in `{hi['group']}` are prioritized versus "
+            f"{pct(lo['tpr_at_capacity'])} for `{lo['group']}`."
         )
 
     def stability(self) -> str:

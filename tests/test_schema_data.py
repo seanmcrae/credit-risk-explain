@@ -1,9 +1,12 @@
 import hashlib
+import io
+from pathlib import Path
 
 import pandas as pd
 import pandera.errors
 import pytest
 
+from credit_ranking import download
 from credit_ranking.data import audit_groups, normalize_uci_columns
 from credit_ranking.download import verify_checksum
 from credit_ranking.schema import COLUMNS, validate
@@ -91,3 +94,18 @@ def test_schema_rejects_duplicate_ids_and_missing_columns(account_frame: pd.Data
 def test_schema_coerces_numeric_strings(account_frame: pd.DataFrame) -> None:
     out = validate(account_frame.astype({"limit_bal": str}))
     assert out["limit_bal"].dtype == float
+
+
+def test_download_refuses_tampered_archive(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    class FakeResponse(io.BytesIO):
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            self.close()
+
+    monkeypatch.setattr(download.urllib.request, "urlopen", lambda *a, **k: FakeResponse(b"x"))
+    dest = tmp_path / "uci.csv"
+    with pytest.raises(ValueError, match="checksum"):
+        download.download_uci(dest)
+    assert not dest.exists()

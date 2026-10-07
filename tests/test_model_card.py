@@ -25,3 +25,9 @@ def test_real_data_card_cites_source(trained_run: TrainResult) -> None:
     card = render_model_card(m)
     assert "Yeh & Lien, 2009" in card
     assert "![" not in card
+
+
+def test_card_names_largest_tpr_gap(trained_run: TrainResult) -> None:
+    m = trained_run.metrics
+    worst = max(m["fairness_summary"], key=lambda s: s["tpr_gap"])["attribute"]
+    assert f"largest TPR gap is on `{worst}`" in render_model_card(m)
