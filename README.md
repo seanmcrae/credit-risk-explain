@@ -109,7 +109,7 @@ The same commands on the real UCI data (`make train-uci`):
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     A["UCI download or synthetic generator"] --> B["pandera schema validation"]
     B --> C["Row-wise feature engineering"]
     B --> G["Audit groups: sex, age band, education, marriage"]

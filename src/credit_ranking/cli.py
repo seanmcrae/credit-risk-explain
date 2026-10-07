@@ -198,6 +198,26 @@ def synth_cmd(
     typer.echo(f"Wrote {rows:,} synthetic accounts to {out}")
 
 
+@app.command("site")
+def site_cmd(
+    out: Annotated[Path, typer.Option("--out", "-o", help="Directory to (re)create.")] = Path(
+        "site"
+    ),
+    results: Annotated[
+        Path, typer.Option(help="Results snapshot written by `train --snapshot`.")
+    ] = Path("docs/results/uci_metrics.json"),
+    demo_output: Annotated[
+        Path | None, typer.Option(help="Captured `make demo` output to show on the site.")
+    ] = None,
+    root: Annotated[Path, typer.Option(help="Repository root.")] = Path(),
+) -> None:
+    """Build the static documentation site; needs the ``docs`` extra."""
+    from credit_ranking.docsite import SiteInputs, build_site
+
+    written = build_site(SiteInputs(root, results, demo_output), out)
+    typer.echo(f"Wrote {len(written)} files to {out}")
+
+
 @app.command("download")
 def download_cmd(
     dest: Annotated[Path, typer.Option()] = Path("data/raw/uci_credit_default.csv"),

@@ -17,9 +17,10 @@ htmlcov/
 dist/
 build/
 
-# downloaded datasets and run outputs
-data/raw/
-artifacts/
+# downloaded datasets, run outputs and the built docs site
+/data/raw/
+/artifacts/
+/site/
 
 # secrets
 .env

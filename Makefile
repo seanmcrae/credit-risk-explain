@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test check demo data train-uci app docker
+.PHONY: install lint format typecheck test check demo data train-uci site app docker
 
 install:
 	uv sync --all-extras
@@ -36,6 +36,13 @@ train-uci: data
 	uv run credit-rank train --data data/raw/uci_credit_default.csv --out artifacts/uci \
 		--label "UCI Default of Credit Card Clients (30,000 rows)" \
 		--card docs/MODEL_CARD.md --img docs/img --snapshot docs/results/uci_metrics.json
+
+# Static docs site in site/ (served from the gh-pages branch). Offline: reads the committed
+# UCI results snapshot and charts, and captures a fresh synthetic demo run.
+site:
+	mkdir -p artifacts
+	$(MAKE) --no-print-directory -s demo > artifacts/demo_output.txt
+	uv run credit-rank site --out site --demo-output artifacts/demo_output.txt
 
 app:
 	uv run streamlit run app/streamlit_app.py -- --artifacts artifacts/demo

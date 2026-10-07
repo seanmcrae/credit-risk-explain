@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}credit-risk-explain{% endblock %}</title>
+  <meta name="description" content="Calibrated, explainable default-risk ranking for a capacity-limited credit work queue, with reason codes, a fairness audit and a generated model card.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">credit-risk-explain</a>
+      <nav aria-label="Site">
+        <a href="index.html#results"{% if page == "index.html" %} class="here"{% endif %}>Results</a>
+        <a href="index.html#fairness">Fairness</a>
+        <a href="index.html#architecture">Architecture</a>
+        <a href="model-card.html"{% if page == "model-card.html" %} class="here"{% endif %}>Model card</a>
+        <a href="product.html"{% if page == "product.html" %} class="here"{% endif %}>Product brief</a>
+        <a href="{{ repo_url }}">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+{% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <div class="wrap">
+      <p>MIT licensed. Results computed on {{ data.label }} (UCI Machine Learning Repository, CC BY 4.0); the data is not redistributed. Independent portfolio project, not a production system.</p>
+      <p><a href="{{ repo_url }}">Source on GitHub</a> &middot; <a href="{{ repo_url }}/blob/main/CHANGELOG.md">Changelog</a> &middot; <a href="{{ repo_url }}/blob/main/CONTRIBUTING.md">Contributing</a></p>
+    </div>
+  </footer>
+</body>
+</html>

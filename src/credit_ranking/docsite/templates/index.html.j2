@@ -1,0 +1,146 @@
+{% extends "base.html.j2" %}
+{% block content %}
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Explainable credit risk ranking</p>
+          <h1>Work the riskiest accounts first, and say why for each one.</h1>
+          <p class="lede">Ranks a capacity-limited collections or outreach queue by calibrated default risk, attaches plain-language reason codes to every account, sizes the queue from an explicit cost/benefit matrix, and publishes a fairness audit and model card generated from the same run.</p>
+          <p class="cta">
+            <a class="button primary" href="{{ repo_url }}">View on GitHub</a>
+            <a class="button" href="model-card.html">Model card</a>
+            <a class="button" href="#quickstart">Quickstart</a>
+          </p>
+        </div>
+        <figure class="hero-chart">
+          <img src="img/lift_curve.png" alt="Cumulative capture of defaulters by share of accounts worked, LightGBM versus logistic regression">
+          <figcaption>{{ results.champion }} captures {{ results.capture }} of next-month defaulters in the riskiest {{ results.capacity_pct }}% of the holdout queue ({{ results.baseline | lower }}: {{ results.capture_baseline }}).</figcaption>
+        </figure>
+      </div>
+      <div class="wrap">
+        <dl class="tiles">
+          <div class="tile"><dt>Defaulters captured in top {{ results.capacity_pct }}%</dt><dd>{{ results.capture }}</dd><p>baseline {{ results.capture_baseline }}</p></div>
+          <div class="tile"><dt>ROC-AUC</dt><dd>{{ results.auc }}</dd><p>baseline {{ results.auc_baseline }}</p></div>
+          <div class="tile"><dt>Calibration error (ECE)</dt><dd>{{ results.ece }}</dd><p>{{ results.ece_uncalibrated }} before calibration</p></div>
+          {% if fairness.gap %}
+          <div class="tile warn"><dt>Largest group TPR gap</dt><dd>{{ fairness.gap_points }} pts</dd><p>{{ fairness.gap.attribute }} {{ fairness.gap.high_group }} {{ fairness.high_tpr }} vs {{ fairness.gap.low_group }} {{ fairness.low_tpr }}</p></div>
+          {% endif %}
+        </dl>
+        <p class="note">Holdout of {{ "{:,}".format(split.test) }} accounts from {{ data.label }}, stratified split. Every figure on this page is read from the committed results of that run.</p>
+      </div>
+    </section>
+
+    {% if sections.get("Features") %}
+    <section class="wrap prose" id="features">
+      <h2>Features</h2>
+{{ sections["Features"] | safe }}
+    </section>
+    {% endif %}
+
+    {% if sections.get("Quickstart") %}
+    <section class="wrap prose" id="quickstart">
+      <h2>Quickstart</h2>
+{{ sections["Quickstart"] | safe }}
+    </section>
+    {% endif %}
+
+    <section class="wrap prose" id="results">
+      <h2>Results</h2>
+      <p>{{ data.label }}: {{ "{:,}".format(split.train) }} training, {{ "{:,}".format(split.calibration) }} calibration and {{ "{:,}".format(split.test) }} holdout accounts. {{ results.champion }} with monotone constraints is the champion; {{ results.baseline | lower }} is the baseline.</p>
+      <table>
+        <thead><tr><th>Holdout metric</th><th>{{ results.champion }}</th><th>{{ results.baseline }}</th></tr></thead>
+        <tbody>
+        {% for label, champ, base in results.rows %}
+          <tr><td>{{ label }}</td><td>{{ champ }}</td><td>{{ base }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="grid2">
+        <figure><img src="img/reliability_curve.png" alt="Reliability curve"><figcaption>Isotonic calibration fitted on a separate split: ECE {{ results.ece }} after, {{ results.ece_uncalibrated }} before.</figcaption></figure>
+        <figure><img src="img/expected_value.png" alt="Expected value by queue size"><figcaption>Under the illustrative economics in <code>configs/default.yaml</code>, value peaks at {{ results.ev_optimal_capacity }} accounts ({{ results.ev_optimal_pct }} of the holdout).</figcaption></figure>
+      </div>
+      <h3 id="lift-by-decile">Lift by decile ({{ results.champion }})</h3>
+      <table>
+        <thead><tr><th>Decile</th><th>Accounts</th><th>Defaults</th><th>Default rate</th><th>Lift</th><th>Cum. capture</th></tr></thead>
+        <tbody>
+        {% for row in results.lift %}
+          <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <figure class="wide"><img src="img/shap_summary.png" alt="SHAP summary of feature contributions on the holdout"><figcaption>Exact TreeSHAP contributions in log-odds. Reason codes group these features and cite only the groups that raise an account's risk.</figcaption></figure>
+      <figure class="wide"><img src="img/queue_dashboard.png" alt="Static queue dashboard: top of the queue, one account's waterfall, capture and reliability"><figcaption>The top of the holdout queue with the first account's SHAP waterfall, as the CLI and Streamlit viewer present it.</figcaption></figure>
+      <p>Score PSI between training and holdout is {{ results.psi }}. Full definitions and every table are in the <a href="model-card.html">model card</a>.</p>
+    </section>
+
+    <section class="wrap prose" id="fairness">
+      <h2>Fairness findings</h2>
+      <p>Sex, age, education and marital status never enter the model; they are joined back only for the audit. "Priority" means falling inside the top {{ results.capacity_pct }}% of the holdout queue. The audit reports selection parity and error-rate parity side by side, because being worked can be a burden (collections contact) or a benefit (early hardship outreach) depending on the program.</p>
+      <table>
+        <thead><tr><th>Attribute</th><th>Priority-rate ratio</th><th>TPR gap</th><th>FPR gap</th><th>Max abs calibration gap</th></tr></thead>
+        <tbody>
+        {% for row in fairness.summary %}
+          <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% if fairness.gap %}
+      <p class="callout">The largest gap is on <strong>{{ fairness.gap.attribute }}</strong>: {{ fairness.high_tpr }} of defaulters in {{ fairness.gap.high_group }} are prioritized versus {{ fairness.low_tpr }} for {{ fairness.gap.low_group }}. The repository measures and publishes this gap; it does not apply a mitigation.</p>
+      {% endif %}
+      {% if fairness.drivers %}
+      <h3 id="where-the-gap-comes-from">Where the gap comes from</h3>
+      <p>Mean SHAP contribution (log-odds) among each group's defaulters, for the features that differ most between the two groups. A positive difference moves {{ fairness.gap.high_group }} defaulters up the queue. This is a proxy screen, not a causal decomposition.</p>
+      <table>
+        <thead><tr><th>Feature</th><th>{{ fairness.gap.high_group }}</th><th>{{ fairness.gap.low_group }}</th><th>Difference</th></tr></thead>
+        <tbody>
+        {% for feature, high, low, diff in fairness.drivers %}
+          <tr><td><code>{{ feature }}</code></td><td>{{ high }}</td><td>{{ low }}</td><td>{{ diff }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      <figure class="wide"><img src="img/fairness.png" alt="TPR at capacity by group, and feature contributions behind the largest gap"></figure>
+      {% if fairness.small_slices %}
+      <p class="note">Slices under 100 accounts are shown in grey and left out of the summary: {{ fairness.small_slices | join(", ") }}.</p>
+      {% endif %}
+      <p>Per-group default rates, priority rates, TPR, calibration gaps and AUC are in the <a href="model-card.html#fairness-audit">model card's fairness audit</a>.</p>
+    </section>
+
+    {% if demo %}
+    <section class="wrap prose" id="example-output">
+      <h2>Example output</h2>
+      <p><code>make demo</code> on the bundled <strong>synthetic</strong> sample, captured when this site was built. Synthetic numbers say nothing about real-world performance.</p>
+      <pre class="terminal"><code>$ make demo
+{{ demo }}</code></pre>
+    </section>
+    {% endif %}
+
+    {% if sections.get("Architecture") %}
+    <section class="wrap prose" id="architecture">
+      <h2>Architecture</h2>
+{{ sections["Architecture"] | safe }}
+    </section>
+    {% endif %}
+
+    {% if sections.get("Design decisions") %}
+    <section class="wrap prose" id="design-decisions">
+      <h2>Design decisions</h2>
+{{ sections["Design decisions"] | safe }}
+    </section>
+    {% endif %}
+
+    {% if sections.get("Data") %}
+    <section class="wrap prose" id="data">
+      <h2>Data</h2>
+{{ sections["Data"] | safe }}
+    </section>
+    {% endif %}
+
+    {% if sections.get("Limitations") %}
+    <section class="wrap prose" id="limitations">
+      <h2>Limitations</h2>
+{{ sections["Limitations"] | safe }}
+      <p>The <a href="model-card.html">model card</a> covers intended use, out-of-scope uses and limitations in full; the <a href="product.html">product brief</a> covers users, success metrics, risks and the roadmap.</p>
+    </section>
+    {% endif %}
+{% endblock %}
