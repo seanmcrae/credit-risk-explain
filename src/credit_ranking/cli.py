@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -15,7 +16,7 @@ from credit_ranking.evaluation import evaluate_scores
 from credit_ranking.features import FEATURE_DESCRIPTIONS
 from credit_ranking.metrics import psi
 from credit_ranking.model_card import render_model_card
-from credit_ranking.pipeline import load_holdout, load_metrics, save_figures, train
+from credit_ranking.pipeline import METRICS_FILE, load_holdout, load_metrics, save_figures, train
 from credit_ranking.plots import waterfall
 from credit_ranking.queue import ModelBundle, build_queue, explain_account, prepare
 from credit_ranking.schema import ID, TARGET
@@ -55,6 +56,10 @@ def train_cmd(
     label: Annotated[str | None, typer.Option(help="Dataset name used in reports.")] = None,
     card: Annotated[Path | None, typer.Option(help="Also write the model card here.")] = None,
     img: Annotated[Path | None, typer.Option(help="Also write charts to this directory.")] = None,
+    snapshot: Annotated[
+        Path | None,
+        typer.Option(help="Also copy metrics.json here (committed results for the docs site)."),
+    ] = None,
 ) -> None:
     """Train both models, calibrate, evaluate on the holdout and save artifacts."""
     result = train(data, load_config(config), out, data_label=label)
@@ -76,6 +81,10 @@ def train_cmd(
         card.parent.mkdir(parents=True, exist_ok=True)
         card.write_text(render_model_card(m, img_rel))
         typer.echo(f"Wrote {card}")
+    if snapshot:
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(out / METRICS_FILE, snapshot)
+        typer.echo(f"Wrote {snapshot}")
     typer.echo(f"Artifacts in {out}")
 
 

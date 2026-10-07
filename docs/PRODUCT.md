@@ -69,9 +69,12 @@ promoting a model in this setting. Current values are from the UCI holdout (6,00
 
 The age-band TPR gap fails the target: defaulters aged 18-24 are prioritized at 60.6% versus 42.6%
 for 55+. In the holdout, defaulters aged 18-24 have a median credit limit of 50,000 against
-100,000 for 55+, and 55% of them are currently late against 50%. Credit limit is the model's
-second-largest driver, so it acts as a partial proxy for age. Whether this is acceptable depends on what being worked means for the customer, which is
-why the gap is published rather than silently corrected.
+100,000 for 55+, and 55% of them are currently late against 50%. The model card's proxy screen
+shows how that reaches the score: among defaulters, credit limit adds 0.164 more log-odds for
+18-24 than for 55+ and recent payment status 0.088 more, partly offset by average utilization
+(0.173 less). Credit limit is the model's second-largest driver, so it acts as a partial proxy
+for age. Whether this is acceptable depends on what being worked means for the customer, which
+is why the gap is published rather than silently corrected.
 
 Evals that run on every commit (synthetic data): hand-computed KS, lift and expected-value cases,
 reason-code mapping, monotonicity of the constrained model, deterministic retraining, invariance

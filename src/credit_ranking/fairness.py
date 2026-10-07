@@ -7,6 +7,8 @@ audit reports both selection-rate parity and error-rate parity rather than picki
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
@@ -71,3 +73,68 @@ def disparity_summary(slices: pd.DataFrame) -> pd.DataFrame:
     )
     summary["priority_rate_ratio"] = summary["priority_rate_min"] / summary["priority_rate_max"]
     return summary.reset_index()
+
+
+@dataclass(frozen=True)
+class TprGap:
+    """The attribute whose reliable slices differ most in TPR at capacity."""
+
+    attribute: str
+    high_group: str
+    low_group: str
+    high_tpr: float
+    low_tpr: float
+
+
+def largest_tpr_gap(slices: pd.DataFrame) -> TprGap | None:
+    """Widest TPR spread across reliable slices, or None if no attribute has two of them."""
+    reliable = slices[~slices["small_slice"].astype(bool)].dropna(subset=["tpr_at_capacity"])
+    best: TprGap | None = None
+    for attribute, rows in reliable.groupby("attribute", sort=True):
+        if len(rows) < 2:
+            continue
+        ordered = rows.sort_values("tpr_at_capacity", ascending=False, kind="stable")
+        hi, lo = ordered.iloc[0], ordered.iloc[-1]
+        gap = TprGap(
+            str(attribute),
+            str(hi["group"]),
+            str(lo["group"]),
+            float(hi["tpr_at_capacity"]),
+            float(lo["tpr_at_capacity"]),
+        )
+        if best is None or gap.high_tpr - gap.low_tpr > best.high_tpr - best.low_tpr:
+            best = gap
+    return best
+
+
+def contributions_by_group(
+    contributions: pd.DataFrame, groups: pd.DataFrame, y: np.ndarray
+) -> pd.DataFrame:
+    """Mean SHAP contribution of each feature among each group's defaulters, in long format.
+
+    Protected attributes are not model inputs, so any gap in how a group's defaulters are ranked
+    has to travel through the features. Comparing where defaulters' log-odds come from, group by
+    group, shows which features carry the gap. It is a proxy screen, not a causal decomposition.
+    """
+    defaulters = y == 1
+    frames: list[pd.DataFrame] = []
+    for attribute in groups.columns:
+        labels = groups[attribute].to_numpy()[defaulters]
+        means = contributions[defaulters].groupby(labels).mean()
+        long = means.stack().rename("mean_contribution").reset_index()
+        long.columns = pd.Index(["group", "feature", "mean_contribution"])
+        long.insert(0, "attribute", attribute)
+        frames.append(long)
+    return pd.concat(frames, ignore_index=True)
+
+
+def gap_drivers(contributions: pd.DataFrame, gap: TprGap, top: int = 4) -> pd.DataFrame:
+    """Features whose mean defaulter contribution differs most between the gap's two groups."""
+    rows = contributions[contributions["attribute"] == gap.attribute]
+    wide = rows.pivot(index="feature", columns="group", values="mean_contribution")
+    drivers = pd.DataFrame(
+        {"high": wide[gap.high_group], "low": wide[gap.low_group]}, index=wide.index
+    )
+    drivers["difference"] = drivers["high"] - drivers["low"]
+    order = drivers["difference"].abs().sort_values(ascending=False).index
+    return drivers.loc[order].head(top).rename_axis("feature").reset_index()

@@ -30,4 +30,15 @@ def test_real_data_card_cites_source(trained_run: TrainResult) -> None:
 def test_card_names_largest_tpr_gap(trained_run: TrainResult) -> None:
     m = trained_run.metrics
     worst = max(m["fairness_summary"], key=lambda s: s["tpr_gap"])["attribute"]
-    assert f"largest TPR gap is on `{worst}`" in render_model_card(m)
+    card = render_model_card(m, img_dir="img")
+    assert f"largest TPR gap is on `{worst}`" in card
+    assert "### Where the largest gap comes from" in card
+    assert "![Fairness audit](img/fairness.png)" in card
+    assert "\n\n\n" not in card
+
+
+def test_card_without_contributions_omits_gap_drivers(trained_run: TrainResult) -> None:
+    m = {k: v for k, v in trained_run.metrics.items() if k != "fairness_contributions"}
+    card = render_model_card(m)
+    assert "Where the largest gap comes from" not in card
+    assert "## Stability" in card

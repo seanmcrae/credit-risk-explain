@@ -22,6 +22,7 @@ from matplotlib.transforms import Bbox
 
 from credit_ranking.config import EconomicsConfig
 from credit_ranking.explain import Attribution
+from credit_ranking.fairness import TprGap, gap_drivers
 from credit_ranking.features import FEATURE_DESCRIPTIONS
 from credit_ranking.metrics import expected_value_curve, rank_order, reliability_curve
 from credit_ranking.queue import AccountExplanation
@@ -162,6 +163,53 @@ def waterfall(
         title="Why this account is ranked here",
     )
     return _finish(fig, owns)
+
+
+def fairness_chart(
+    slices: pd.DataFrame,
+    contributions: pd.DataFrame,
+    gap: TprGap | None,
+    capacity_pct: float,
+) -> Figure:
+    """TPR at capacity per group, and the features behind the widest TPR gap."""
+    fig, (tpr_ax, gap_ax) = plt.subplots(
+        1, 2, figsize=(12, 0.32 * len(slices) + 2.2), width_ratios=[1.1, 1]
+    )
+    rows = slices.iloc[::-1].reset_index(drop=True)  # first attribute at the top
+    small = rows["small_slice"].astype(bool).to_numpy()
+    labels = [
+        f"{r['attribute']}: {r['group']}" + (" (n<100)" if s else "")
+        for (_, r), s in zip(rows.iterrows(), small, strict=True)
+    ]
+    tpr = rows["tpr_at_capacity"].fillna(0).to_numpy()
+    tpr_ax.barh(labels, tpr, color=np.where(small, "#cccccc", RISK_DOWN))
+    for y_, value in enumerate(tpr):
+        tpr_ax.text(value + 0.01, y_, f"{value:.0%}", va="center", fontsize=8)
+    tpr_ax.set_xlim(0, 1)
+    tpr_ax.tick_params(axis="y", labelsize=8)
+    tpr_ax.set(
+        xlabel=f"Share of the group's defaulters inside the top {capacity_pct:g}%",
+        title="TPR at capacity by group",
+    )
+    tpr_ax.grid(alpha=0.3, axis="x")
+    if gap is None:
+        gap_ax.axis("off")
+    else:
+        drivers = gap_drivers(contributions, gap, top=5).iloc[::-1]
+        ypos = np.arange(len(drivers))
+        height = 0.38
+        gap_ax.barh(ypos + height / 2, drivers["high"], height, color=RISK_UP, label=gap.high_group)
+        gap_ax.barh(ypos - height / 2, drivers["low"], height, color="#7f8c8d", label=gap.low_group)
+        gap_ax.set_yticks(ypos, list(drivers["feature"]), fontsize=8)
+        gap_ax.axvline(0, color="grey", lw=1)
+        gap_ax.legend(fontsize=8, loc="lower right", title=gap.attribute, title_fontsize=8)
+        gap_ax.set(
+            xlabel="Mean SHAP contribution among defaulters (log-odds)",
+            title=f"Where the {gap.attribute} gap comes from",
+        )
+        gap_ax.grid(alpha=0.3, axis="x")
+    fig.tight_layout()
+    return fig
 
 
 def queue_dashboard(

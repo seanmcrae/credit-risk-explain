@@ -12,10 +12,11 @@ runner = CliRunner()
 def test_train_writes_card_and_charts(
     synthetic_csv: Path, fast_config_path: Path, tmp_path: Path
 ) -> None:
-    out, card, img = (
+    out, card, img, snapshot = (
         tmp_path / "run",
         tmp_path / "docs" / "MODEL_CARD.md",
         tmp_path / "docs" / "img",
+        tmp_path / "docs" / "results" / "metrics.json",
     )
     result = runner.invoke(
         app,
@@ -33,12 +34,15 @@ def test_train_writes_card_and_charts(
             str(card),
             "--img",
             str(img),
+            "--snapshot",
+            str(snapshot),
         ],
     )
     assert result.exit_code == 0, result.output
     assert "Champion: LightGBM" in result.output
     assert "](img/lift_curve.png)" in card.read_text()
-    assert (img / "shap_summary.png").exists()
+    assert (img / "fairness.png").exists()
+    assert snapshot.read_text() == (out / "metrics.json").read_text()
 
 
 def test_rank_limits_queue_to_capacity(trained_run: TrainResult, tmp_path: Path) -> None:

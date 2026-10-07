@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from typing import Any
 
+import pandas as pd
+
 from credit_ranking.explain import REASONS
+from credit_ranking.fairness import TprGap, gap_drivers, largest_tpr_gap
 from credit_ranking.features import FEATURE_DESCRIPTIONS
 from credit_ranking.schema import PROTECTED_ATTRIBUTES
 
@@ -263,25 +266,47 @@ class _Card:
             f"{table(summary_headers, summary)}\n\n{table(slice_headers, slices)}\n\n"
             "Differences in priority rate mostly follow differences in observed default rate. "
             "TPR, FPR and calibration gaps are the signals that equally risky accounts are "
-            f"treated differently.{self._largest_tpr_gap()}"
-        )
+            f"treated differently.{self._largest_tpr_gap()}\n\n{self._gap_drivers()}"
+        ).rstrip()
+
+    def _gap(self) -> TprGap | None:
+        return largest_tpr_gap(pd.DataFrame(self.m["fairness_slices"]))
 
     def _largest_tpr_gap(self) -> str:
-        reliable = [
-            s
-            for s in self.m["fairness_slices"]
-            if not s["small_slice"] and s["tpr_at_capacity"] is not None
-        ]
-        if not self.m["fairness_summary"] or not reliable:
+        gap = self._gap()
+        if gap is None:
             return ""
-        worst = max(self.m["fairness_summary"], key=lambda s: s["tpr_gap"])["attribute"]
-        groups = [s for s in reliable if s["attribute"] == worst]
-        hi = max(groups, key=lambda s: s["tpr_at_capacity"])
-        lo = min(groups, key=lambda s: s["tpr_at_capacity"])
         return (
-            f" On this run the largest TPR gap is on `{worst}`: {pct(hi['tpr_at_capacity'])} of "
-            f"defaulters in `{hi['group']}` are prioritized versus "
-            f"{pct(lo['tpr_at_capacity'])} for `{lo['group']}`."
+            f" On this run the largest TPR gap is on `{gap.attribute}`: {pct(gap.high_tpr)} of "
+            f"defaulters in `{gap.high_group}` are prioritized versus "
+            f"{pct(gap.low_tpr)} for `{gap.low_group}`."
+        )
+
+    def _gap_drivers(self) -> str:
+        gap = self._gap()
+        contributions = self.m.get("fairness_contributions")
+        if gap is None or not contributions:
+            return ""
+        drivers = gap_drivers(pd.DataFrame(contributions), gap)
+        rows = (
+            (
+                f"`{d['feature']}`",
+                f"{d['high']:+.3f}",
+                f"{d['low']:+.3f}",
+                f"{d['difference']:+.3f}",
+            )
+            for _, d in drivers.iterrows()
+        )
+        headers = ["Feature", f"`{gap.high_group}`", f"`{gap.low_group}`", "Difference"]
+        return (
+            "### Where the largest gap comes from\n\n"
+            "Protected attributes are not model inputs, so a TPR gap has to travel through the "
+            "features. The table compares the mean SHAP contribution (log-odds) among each "
+            f"group's defaulters for the features that differ most between `{gap.high_group}` "
+            f"and `{gap.low_group}`. A positive difference moves `{gap.high_group}` defaulters "
+            "up the queue. This is a proxy screen, not a causal decomposition.\n\n"
+            f"{table(headers, rows)}\n\n"
+            f"{self.img('fairness.png', 'Fairness audit')}"
         )
 
     def stability(self) -> str:

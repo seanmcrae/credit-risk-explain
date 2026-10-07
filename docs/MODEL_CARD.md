@@ -162,6 +162,19 @@ Priority means the account falls inside the top 20% of the holdout queue. Priori
 
 Differences in priority rate mostly follow differences in observed default rate. TPR, FPR and calibration gaps are the signals that equally risky accounts are treated differently. On this run the largest TPR gap is on `age_band`: 60.6% of defaulters in `18-24` are prioritized versus 42.6% for `55+`.
 
+### Where the largest gap comes from
+
+Protected attributes are not model inputs, so a TPR gap has to travel through the features. The table compares the mean SHAP contribution (log-odds) among each group's defaulters for the features that differ most between `18-24` and `55+`. A positive difference moves `18-24` defaulters up the queue. This is a proxy screen, not a causal decomposition.
+
+| Feature | `18-24` | `55+` | Difference |
+|---|---|---|---|
+| `utilization_mean` | -0.100 | +0.073 | -0.173 |
+| `log_limit` | +0.261 | +0.098 | +0.164 |
+| `payment_to_limit_mean` | -0.040 | +0.060 | -0.100 |
+| `pay_status_recent` | +0.439 | +0.351 | +0.088 |
+
+![Fairness audit](img/fairness.png)
+
 ## Stability
 
 PSI of champion scores, training vs holdout: 0.002 (under 0.1 is conventionally stable). In production the same check runs between the development sample and each new scoring month.

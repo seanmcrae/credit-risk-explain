@@ -191,8 +191,9 @@ flowchart LR
   respond to contact; an uplift model would be the right target for outreach.
 - The economics are placeholders and drive the recommended capacity.
 - On the UCI holdout, defaulters aged 18-24 are prioritized at 60.6% versus 42.6% for 55+ at 20%
-  capacity, largely through credit limit acting as a partial proxy for age. The model card
-  reports this; the repository does not apply a mitigation.
+  capacity. The model card's proxy screen traces it mainly to credit limit (+0.164 log-odds for
+  18-24 defaulters relative to 55+) and recent payment status (+0.088), partly offset by
+  utilization (-0.173). The repository measures the gap; it does not apply a mitigation.
 - Reason codes explain the model, not the customer's situation, and are not legal adverse-action
   notices.
 

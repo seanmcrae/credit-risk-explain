@@ -1,0 +1,1682 @@
+{
+  "data": {
+    "label": "UCI Default of Credit Card Clients (30,000 rows)",
+    "path": "data/raw/uci_credit_default.csv",
+    "rows": 30000,
+    "default_rate": 0.2212
+  },
+  "split": {
+    "train": 19500,
+    "calibration": 4500,
+    "test": 6000
+  },
+  "champion": "lightgbm",
+  "models": {
+    "LightGBM": {
+      "roc_auc": 0.7776529247931526,
+      "pr_auc": 0.5567030330363509,
+      "ks": 0.4294342058009012,
+      "brier": 0.13536883132479643,
+      "ece": 0.01008539743854952,
+      "ece_uncalibrated": 0.016370814447954688,
+      "precision_at_top_pct": {
+        "1": 0.8666666666666667,
+        "5": 0.77,
+        "10": 0.6916666666666667,
+        "20": 0.5608333333333333
+      },
+      "recall_at_top_pct": {
+        "1": 0.03918613413715147,
+        "5": 0.17407686510926904,
+        "10": 0.31273549359457425,
+        "20": 0.5071590052750565
+      },
+      "top_decile_lift": 3.127354935945742,
+      "top_two_decile_capture": 0.5071590052750565,
+      "eval_capacity": 1200,
+      "ev_at_eval_capacity": 197200.0,
+      "ev_optimal_capacity": 3102,
+      "ev_optimal_capacity_pct": 51.7,
+      "ev_optimal_value": 237880.0,
+      "ev_work_everyone": 170800.0
+    },
+    "Logistic regression": {
+      "roc_auc": 0.7381464427677089,
+      "pr_auc": 0.5039774899928203,
+      "ks": 0.3866298257188153,
+      "brier": 0.14256309768927614,
+      "ece": 0.009372819861253325,
+      "ece_uncalibrated": 0.01636505288022204,
+      "precision_at_top_pct": {
+        "1": 0.75,
+        "5": 0.7066666666666667,
+        "10": 0.6483333333333333,
+        "20": 0.5333333333333333
+      },
+      "recall_at_top_pct": {
+        "1": 0.03391107761868877,
+        "5": 0.15975885455915598,
+        "10": 0.2931424265259985,
+        "20": 0.4822908816880181
+      },
+      "top_decile_lift": 2.931424265259985,
+      "top_two_decile_capture": 0.4822908816880181,
+      "eval_capacity": 1200,
+      "ev_at_eval_capacity": 184000.0,
+      "ev_optimal_capacity": 2768,
+      "ev_optimal_capacity_pct": 46.13333333333333,
+      "ev_optimal_value": 219920.0,
+      "ev_work_everyone": 170800.0
+    }
+  },
+  "champion_label": "LightGBM",
+  "psi_train_vs_test": 0.0018547771313941238,
+  "lift_table": [
+    {
+      "bucket": 1,
+      "accounts": 600,
+      "events": 415.0,
+      "min_score": 0.6007348943,
+      "max_score": 0.930539403,
+      "event_rate": 0.6916666667,
+      "lift": 3.1273549359,
+      "cum_accounts": 600,
+      "cum_events": 415.0,
+      "capture_rate": 0.3127354936,
+      "cum_lift": 3.1273549359
+    },
+    {
+      "bucket": 2,
+      "accounts": 600,
+      "events": 258.0,
+      "min_score": 0.3333178981,
+      "max_score": 0.600050115,
+      "event_rate": 0.43,
+      "lift": 1.9442351168,
+      "cum_accounts": 1200,
+      "cum_events": 673.0,
+      "capture_rate": 0.5071590053,
+      "cum_lift": 2.5357950264
+    },
+    {
+      "bucket": 3,
+      "accounts": 600,
+      "events": 158.0,
+      "min_score": 0.2208346154,
+      "max_score": 0.3317213004,
+      "event_rate": 0.2633333333,
+      "lift": 1.1906556142,
+      "cum_accounts": 1800,
+      "cum_events": 831.0,
+      "capture_rate": 0.6262245667,
+      "cum_lift": 2.0874152223
+    },
+    {
+      "bucket": 4,
+      "accounts": 600,
+      "events": 109.0,
+      "min_score": 0.1741306862,
+      "max_score": 0.2206981789,
+      "event_rate": 0.1816666667,
+      "lift": 0.8214016579,
+      "cum_accounts": 2400,
+      "cum_events": 940.0,
+      "capture_rate": 0.7083647325,
+      "cum_lift": 1.7709118312
+    },
+    {
+      "bucket": 5,
+      "accounts": 600,
+      "events": 101.0,
+      "min_score": 0.1452459439,
+      "max_score": 0.1740184265,
+      "event_rate": 0.1683333333,
+      "lift": 0.7611152977,
+      "cum_accounts": 3000,
+      "cum_events": 1041.0,
+      "capture_rate": 0.7844762622,
+      "cum_lift": 1.5689525245
+    },
+    {
+      "bucket": 6,
+      "accounts": 600,
+      "events": 91.0,
+      "min_score": 0.1206085279,
+      "max_score": 0.1452192702,
+      "event_rate": 0.1516666667,
+      "lift": 0.6857573474,
+      "cum_accounts": 3600,
+      "cum_events": 1132.0,
+      "capture_rate": 0.853051997,
+      "cum_lift": 1.4217533283
+    },
+    {
+      "bucket": 7,
+      "accounts": 600,
+      "events": 67.0,
+      "min_score": 0.0945679225,
+      "max_score": 0.1205771963,
+      "event_rate": 0.1116666667,
+      "lift": 0.5048982668,
+      "cum_accounts": 4200,
+      "cum_events": 1199.0,
+      "capture_rate": 0.9035418237,
+      "cum_lift": 1.2907740338
+    },
+    {
+      "bucket": 8,
+      "accounts": 600,
+      "events": 60.0,
+      "min_score": 0.0705222418,
+      "max_score": 0.0945318387,
+      "event_rate": 0.1,
+      "lift": 0.4521477016,
+      "cum_accounts": 4800,
+      "cum_events": 1259.0,
+      "capture_rate": 0.9487565938,
+      "cum_lift": 1.1859457423
+    },
+    {
+      "bucket": 9,
+      "accounts": 600,
+      "events": 44.0,
+      "min_score": 0.0487728065,
+      "max_score": 0.0705207568,
+      "event_rate": 0.0733333333,
+      "lift": 0.3315749812,
+      "cum_accounts": 5400,
+      "cum_events": 1303.0,
+      "capture_rate": 0.9819140919,
+      "cum_lift": 1.0910156577
+    },
+    {
+      "bucket": 10,
+      "accounts": 600,
+      "events": 24.0,
+      "min_score": 0.0155923337,
+      "max_score": 0.0486647655,
+      "event_rate": 0.04,
+      "lift": 0.1808590806,
+      "cum_accounts": 6000,
+      "cum_events": 1327.0,
+      "capture_rate": 1.0,
+      "cum_lift": 1.0
+    }
+  ],
+  "global_importance": {
+    "pay_status_recent": 0.29390372564924655,
+    "log_limit": 0.2459735196201104,
+    "utilization_mean": 0.24236866416130373,
+    "months_delinquent": 0.2366431050725594,
+    "max_delay": 0.1614157932579042,
+    "utilization_recent": 0.1251944706634068,
+    "utilization_trend": 0.12414301580985862,
+    "payment_to_limit_mean": 0.11131404714763353,
+    "months_zero_payment": 0.09297957255659771,
+    "payment_ratio_mean": 0.0817076283579008,
+    "utilization_max": 0.08077857220500817,
+    "delinquency_streak": 0.06728488216749688,
+    "payment_ratio_recent": 0.0403602164528106,
+    "pay_status_prev": 0.02948559822582833
+  },
+  "fairness_slices": [
+    {
+      "attribute": "sex",
+      "group": "female",
+      "accounts": 3598,
+      "default_rate": 0.2128960534,
+      "mean_predicted": 0.2238086891,
+      "calibration_gap": 0.0109126358,
+      "priority_rate": 0.1948304614,
+      "tpr_at_capacity": 0.5221932115,
+      "fpr_at_capacity": 0.1062853107,
+      "auc": 0.7803268963,
+      "small_slice": false
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "accounts": 2402,
+      "default_rate": 0.2335553705,
+      "mean_predicted": 0.2331137652,
+      "calibration_gap": -0.0004416054,
+      "priority_rate": 0.207743547,
+      "tpr_at_capacity": 0.486631016,
+      "fpr_at_capacity": 0.1227593699,
+      "auc": 0.77297369,
+      "small_slice": false
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "accounts": 541,
+      "default_rate": 0.2532347505,
+      "mean_predicted": 0.2821096004,
+      "calibration_gap": 0.0288748499,
+      "priority_rate": 0.2865064695,
+      "tpr_at_capacity": 0.6058394161,
+      "fpr_at_capacity": 0.1782178218,
+      "auc": 0.7770109128,
+      "small_slice": false
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "accounts": 2518,
+      "default_rate": 0.201350278,
+      "mean_predicted": 0.216587232,
+      "calibration_gap": 0.015236954,
+      "priority_rate": 0.1854646545,
+      "tpr_at_capacity": 0.5009861933,
+      "fpr_at_capacity": 0.105917454,
+      "auc": 0.7870332501,
+      "small_slice": false
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "accounts": 1855,
+      "default_rate": 0.2247978437,
+      "mean_predicted": 0.2221797715,
+      "calibration_gap": -0.0026180722,
+      "priority_rate": 0.1892183288,
+      "tpr_at_capacity": 0.4916067146,
+      "fpr_at_capacity": 0.1015299026,
+      "auc": 0.7686568409,
+      "small_slice": false
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "accounts": 859,
+      "default_rate": 0.246798603,
+      "mean_predicted": 0.2346068912,
+      "calibration_gap": -0.0121917118,
+      "priority_rate": 0.2153667055,
+      "tpr_at_capacity": 0.5094339623,
+      "fpr_at_capacity": 0.1190108192,
+      "auc": 0.7711753813,
+      "small_slice": false
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "accounts": 227,
+      "default_rate": 0.2378854626,
+      "mean_predicted": 0.2358774787,
+      "calibration_gap": -0.0020079839,
+      "priority_rate": 0.1850220264,
+      "tpr_at_capacity": 0.4259259259,
+      "fpr_at_capacity": 0.1098265896,
+      "auc": 0.7843074288,
+      "small_slice": false
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "accounts": 2130,
+      "default_rate": 0.1901408451,
+      "mean_predicted": 0.1983197287,
+      "calibration_gap": 0.0081788837,
+      "priority_rate": 0.1544600939,
+      "tpr_at_capacity": 0.4592592593,
+      "fpr_at_capacity": 0.0828985507,
+      "auc": 0.7918797638,
+      "small_slice": false
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "accounts": 1014,
+      "default_rate": 0.2573964497,
+      "mean_predicted": 0.2495919726,
+      "calibration_gap": -0.0078044771,
+      "priority_rate": 0.2278106509,
+      "tpr_at_capacity": 0.4942528736,
+      "fpr_at_capacity": 0.1354581673,
+      "auc": 0.7343804857,
+      "small_slice": false
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "accounts": 82,
+      "default_rate": 0.0609756098,
+      "mean_predicted": 0.1599692194,
+      "calibration_gap": 0.0989936097,
+      "priority_rate": 0.0609756098,
+      "tpr_at_capacity": 0.2,
+      "fpr_at_capacity": 0.0519480519,
+      "auc": 0.5506493506,
+      "small_slice": true
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "accounts": 2774,
+      "default_rate": 0.236481615,
+      "mean_predicted": 0.2438998446,
+      "calibration_gap": 0.0074182296,
+      "priority_rate": 0.2289113194,
+      "tpr_at_capacity": 0.5442073171,
+      "fpr_at_capacity": 0.1312559018,
+      "auc": 0.7802045907,
+      "small_slice": false
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "accounts": 2767,
+      "default_rate": 0.2414166968,
+      "mean_predicted": 0.2271772824,
+      "calibration_gap": -0.0142394144,
+      "priority_rate": 0.2052764727,
+      "tpr_at_capacity": 0.501497006,
+      "fpr_at_capacity": 0.1110052406,
+      "auc": 0.7797725179,
+      "small_slice": false
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "accounts": 75,
+      "default_rate": 0.16,
+      "mean_predicted": 0.2323712875,
+      "calibration_gap": 0.0723712875,
+      "priority_rate": 0.1733333333,
+      "tpr_at_capacity": 0.3333333333,
+      "fpr_at_capacity": 0.1428571429,
+      "auc": 0.6785714286,
+      "small_slice": true
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "accounts": 3158,
+      "default_rate": 0.2048765041,
+      "mean_predicted": 0.2277313301,
+      "calibration_gap": 0.022854826,
+      "priority_rate": 0.196010133,
+      "tpr_at_capacity": 0.5162287481,
+      "fpr_at_capacity": 0.1135005974,
+      "auc": 0.7791220946,
+      "small_slice": false
+    }
+  ],
+  "fairness_summary": [
+    {
+      "attribute": "age_band",
+      "groups": 5,
+      "priority_rate_min": 0.1850220264,
+      "priority_rate_max": 0.2865064695,
+      "tpr_gap": 0.1799134901,
+      "fpr_gap": 0.0766879191,
+      "max_abs_calibration_gap": 0.0288748499,
+      "priority_rate_ratio": 0.6457865568
+    },
+    {
+      "attribute": "education",
+      "groups": 3,
+      "priority_rate_min": 0.1544600939,
+      "priority_rate_max": 0.2289113194,
+      "tpr_gap": 0.0849480578,
+      "fpr_gap": 0.0525596166,
+      "max_abs_calibration_gap": 0.0081788837,
+      "priority_rate_ratio": 0.6747595283
+    },
+    {
+      "attribute": "marriage",
+      "groups": 2,
+      "priority_rate_min": 0.196010133,
+      "priority_rate_max": 0.2052764727,
+      "tpr_gap": 0.0147317421,
+      "fpr_gap": 0.0024953568,
+      "max_abs_calibration_gap": 0.022854826,
+      "priority_rate_ratio": 0.9548592218
+    },
+    {
+      "attribute": "sex",
+      "groups": 2,
+      "priority_rate_min": 0.1948304614,
+      "priority_rate_max": 0.207743547,
+      "tpr_gap": 0.0355621954,
+      "fpr_gap": 0.0164740592,
+      "max_abs_calibration_gap": 0.0109126358,
+      "priority_rate_ratio": 0.9378412188
+    }
+  ],
+  "fairness_contributions": [
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "log_limit",
+      "mean_contribution": 0.0657137916
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.324491467
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0089020289
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2046332423
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0479670244
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "max_delay",
+      "mean_contribution": 0.153715299
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0227042318
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0166913147
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0588512055
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0199330306
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0046019048
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0228750635
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0521988213
+    },
+    {
+      "attribute": "sex",
+      "group": "female",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0296051631
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "log_limit",
+      "mean_contribution": 0.1068400885
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.2912056572
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0146830153
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2153675985
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0477658407
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "max_delay",
+      "mean_contribution": 0.15470134
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0252633994
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.0132160259
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0463882694
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0244218277
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0071468554
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0325614216
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0504686924
+    },
+    {
+      "attribute": "sex",
+      "group": "male",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0140634305
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "log_limit",
+      "mean_contribution": 0.2613877399
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.4390655711
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0251452708
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.246962648
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0580979603
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "max_delay",
+      "mean_contribution": 0.197886886
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0696893536
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.1003738092
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "utilization_max",
+      "mean_contribution": 0.027123166
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0257622638
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0060353663
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0374735405
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0723000774
+    },
+    {
+      "attribute": "age_band",
+      "group": "18-24",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": -0.0402160009
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "log_limit",
+      "mean_contribution": 0.0743094001
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.2740941867
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0111112194
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2224437364
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0471112866
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "max_delay",
+      "mean_contribution": 0.1584376932
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0109322476
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0096689749
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0467453218
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0346720663
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0079235134
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0221290654
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0630197867
+    },
+    {
+      "attribute": "age_band",
+      "group": "25-34",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0223025042
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "log_limit",
+      "mean_contribution": 0.0334181733
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.3198545478
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0078755249
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.1863001496
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0470384637
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "max_delay",
+      "mean_contribution": 0.1386945947
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0255380568
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0175207838
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0700366615
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0124095611
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0059560126
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0321388134
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0343225811
+    },
+    {
+      "attribute": "age_band",
+      "group": "35-44",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0391203045
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "log_limit",
+      "mean_contribution": 0.0829160537
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.285153435
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0142721621
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2084743367
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0453040223
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "max_delay",
+      "mean_contribution": 0.1526499857
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0242847358
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0141194159
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0485457829
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0119953423
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0004230664
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0205615273
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0506363307
+    },
+    {
+      "attribute": "age_band",
+      "group": "45-54",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0247202653
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "log_limit",
+      "mean_contribution": 0.0976941889
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.3514301264
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "pay_status_prev",
+      "mean_contribution": -0.006147348
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.1680316196
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0458341169
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "max_delay",
+      "mean_contribution": 0.1277317407
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0125256271
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0726095381
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0776129047
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0026551753
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0021672436
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0310188132
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0258087532
+    },
+    {
+      "attribute": "age_band",
+      "group": "55+",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0595462719
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "log_limit",
+      "mean_contribution": 0.00611635
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.2628986301
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.000707491
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.1831764078
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0410206456
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "max_delay",
+      "mean_contribution": 0.129340554
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "utilization_recent",
+      "mean_contribution": -0.0107322472
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0793129898
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0709934865
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0179876353
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0041216266
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0136485057
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0480340462
+    },
+    {
+      "attribute": "education",
+      "group": "graduate school",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0570551946
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "log_limit",
+      "mean_contribution": 0.1372941907
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.2635408116
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0132027246
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.1909725237
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0385607579
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "max_delay",
+      "mean_contribution": 0.143858023
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0279771769
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.0100022123
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0550128237
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0204877809
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0096661199
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0180061292
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.044797436
+    },
+    {
+      "attribute": "education",
+      "group": "high school",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0225697703
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "log_limit",
+      "mean_contribution": 0.0938658257
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.1323722911
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0135534745
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "months_delinquent",
+      "mean_contribution": -0.0975833779
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "delinquency_streak",
+      "mean_contribution": -0.0107800729
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "max_delay",
+      "mean_contribution": -0.0133394022
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.1823011537
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.1578296693
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0278663791
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "utilization_trend",
+      "mean_contribution": -0.0306752519
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0049208371
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": -0.0125493439
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "months_zero_payment",
+      "mean_contribution": -0.052551168
+    },
+    {
+      "attribute": "education",
+      "group": "other/unknown",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": -0.0961475456
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "log_limit",
+      "mean_contribution": 0.1089844807
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.3597665837
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0171584046
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2347986729
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0562737171
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "max_delay",
+      "mean_contribution": 0.1748021332
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0422213716
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.0355955467
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0424600635
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0251378352
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0050575072
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0390621316
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0570336431
+    },
+    {
+      "attribute": "education",
+      "group": "university",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0031247154
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "log_limit",
+      "mean_contribution": 0.0654672122
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.3055241466
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.0108914821
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2095173886
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0469772234
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "max_delay",
+      "mean_contribution": 0.1502365541
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0212095894
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "utilization_mean",
+      "mean_contribution": 0.0090459086
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0544259153
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0076048415
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0046129436
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0298618959
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0477898618
+    },
+    {
+      "attribute": "marriage",
+      "group": "married",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0303271666
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "log_limit",
+      "mean_contribution": 0.1777872517
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.2267178027
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.003317396
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.0372791109
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0176771568
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "max_delay",
+      "mean_contribution": 0.0575818537
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0882975646
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.0222102765
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0736498015
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0237009083
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0128676556
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.031216956
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "months_zero_payment",
+      "mean_contribution": -0.0185615386
+    },
+    {
+      "attribute": "marriage",
+      "group": "other/unknown",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0076370181
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "log_limit",
+      "mean_contribution": 0.0995494734
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "pay_status_recent",
+      "mean_contribution": 0.3170264202
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "pay_status_prev",
+      "mean_contribution": 0.011964153
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "months_delinquent",
+      "mean_contribution": 0.2120020424
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "delinquency_streak",
+      "mean_contribution": 0.0493763002
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "max_delay",
+      "mean_contribution": 0.159944931
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "utilization_recent",
+      "mean_contribution": 0.0252498178
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "utilization_mean",
+      "mean_contribution": -0.000625637
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "utilization_max",
+      "mean_contribution": 0.0523393099
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "utilization_trend",
+      "mean_contribution": 0.0364836194
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "payment_ratio_recent",
+      "mean_contribution": -0.0066438744
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "payment_ratio_mean",
+      "mean_contribution": 0.0239055737
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "months_zero_payment",
+      "mean_contribution": 0.0565631288
+    },
+    {
+      "attribute": "marriage",
+      "group": "single",
+      "feature": "payment_to_limit_mean",
+      "mean_contribution": 0.0157912641
+    }
+  ],
+  "config": {
+    "seed": 42,
+    "split": {
+      "test_size": 0.2,
+      "calibration_size": 0.15
+    },
+    "models": {
+      "champion": "lightgbm",
+      "logistic_regression": {
+        "C": 0.5,
+        "max_iter": 2000
+      },
+      "lightgbm": {
+        "n_estimators": 400,
+        "learning_rate": 0.03,
+        "num_leaves": 15,
+        "min_child_samples": 60,
+        "subsample": 0.8,
+        "subsample_freq": 1,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0,
+        "monotone": true
+      }
+    },
+    "monotone_constraints": {
+      "pay_status_recent": 1,
+      "pay_status_prev": 1,
+      "delinquency_streak": 1,
+      "months_delinquent": 1,
+      "max_delay": 1,
+      "utilization_recent": 1,
+      "months_zero_payment": 1,
+      "payment_ratio_mean": -1
+    },
+    "calibration": {
+      "method": "isotonic",
+      "n_bins": 10
+    },
+    "economics": {
+      "cost_per_contact": 60.0,
+      "loss_given_default": 4000.0,
+      "cure_rate_if_worked": 0.1
+    },
+    "ranking": {
+      "capacity": 500,
+      "eval_capacity_percent": 20,
+      "top_k_percents": [
+        1,
+        5,
+        10,
+        20
+      ]
+    },
+    "n_reasons": 4
+  },
+  "break_even_probability": 0.15
+}

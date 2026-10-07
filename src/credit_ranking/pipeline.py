@@ -16,7 +16,12 @@ from credit_ranking.config import Config, ModelName
 from credit_ranking.data import audit_groups, load_dataset
 from credit_ranking.evaluation import evaluate_scores
 from credit_ranking.explain import global_importance, reason_table
-from credit_ranking.fairness import disparity_summary, slice_metrics
+from credit_ranking.fairness import (
+    contributions_by_group,
+    disparity_summary,
+    largest_tpr_gap,
+    slice_metrics,
+)
 from credit_ranking.features import build_features
 from credit_ranking.metrics import lift_table, psi, top_k_count
 from credit_ranking.models import ScoredModel, stratified_split, train_model
@@ -79,8 +84,10 @@ def train(
     importance = global_importance(attribution)
     capacity = top_k_count(len(y_test), cfg.ranking.eval_capacity_percent)
     champ_raw, champ_prob = raw[cfg.models.champion], prob[cfg.models.champion]
-    slices = slice_metrics(groups.loc[X_test.index], y_test, champ_prob, champ_raw, capacity)
+    test_groups = groups.loc[X_test.index]
+    slices = slice_metrics(test_groups, y_test, champ_prob, champ_raw, capacity)
     disparities = disparity_summary(slices)
+    group_contributions = contributions_by_group(attribution.values, test_groups, y_test)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     bundle.save(out_dir)
@@ -127,6 +134,7 @@ def train(
         "global_importance": {k: float(v) for k, v in importance.items()},
         "fairness_slices": _to_records(slices),
         "fairness_summary": _to_records(disparities),
+        "fairness_contributions": _to_records(group_contributions),
         "config": asdict(cfg),
         "break_even_probability": cfg.economics.break_even_probability,
     }
@@ -159,6 +167,7 @@ def save_figures(result: TrainResult, img_dir: Path) -> list[Path]:
         ),
         "expected_value.png": plots.expected_value_plot(y, champ.raw_score(X), cfg.economics),
         "shap_summary.png": plots.shap_summary(result.bundle.attribution(X)),
+        "fairness.png": _fairness_figure(result),
         "queue_dashboard.png": _dashboard(result, holdout),
     }
     paths = []
@@ -168,6 +177,18 @@ def save_figures(result: TrainResult, img_dir: Path) -> list[Path]:
         plt.close(fig)
         paths.append(path)
     return paths
+
+
+def _fairness_figure(result: TrainResult) -> Figure:
+    m = result.metrics
+    slices = pd.DataFrame(m["fairness_slices"])
+    contributions = pd.DataFrame(m["fairness_contributions"])
+    return plots.fairness_chart(
+        slices,
+        contributions,
+        largest_tpr_gap(slices),
+        m["config"]["ranking"]["eval_capacity_percent"],
+    )
 
 
 def _dashboard(result: TrainResult, holdout: pd.DataFrame) -> Figure:

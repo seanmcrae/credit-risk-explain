@@ -31,11 +31,11 @@ demo:
 data:
 	uv run python scripts/download_uci.py
 
-# Regenerates docs/MODEL_CARD.md and docs/img/ from the real-data run.
+# Regenerates docs/MODEL_CARD.md, docs/img/ and docs/results/ from the real-data run.
 train-uci: data
 	uv run credit-rank train --data data/raw/uci_credit_default.csv --out artifacts/uci \
 		--label "UCI Default of Credit Card Clients (30,000 rows)" \
-		--card docs/MODEL_CARD.md --img docs/img
+		--card docs/MODEL_CARD.md --img docs/img --snapshot docs/results/uci_metrics.json
 
 app:
 	uv run streamlit run app/streamlit_app.py -- --artifacts artifacts/demo
