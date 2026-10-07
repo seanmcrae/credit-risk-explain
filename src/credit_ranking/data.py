@@ -6,7 +6,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from credit_ranking.schema import BILL_AMT, ID, LIMIT, PAY_AMT, PAY_STATUS, TARGET, validate
+from credit_ranking.schema import (
+    BILL_AMT,
+    COLUMNS,
+    ID,
+    LIMIT,
+    PAY_AMT,
+    PAY_STATUS,
+    TARGET,
+    validate,
+)
 
 _UCI_RENAMES: dict[str, str] = {
     "ID": ID,
@@ -38,7 +47,7 @@ def normalize_uci_columns(raw: pd.DataFrame) -> pd.DataFrame:
     missing = set(_UCI_RENAMES) - set(raw.columns)
     if missing:
         raise ValueError(f"not a UCI credit default table; missing columns: {sorted(missing)}")
-    return raw.rename(columns=_UCI_RENAMES)[list(_UCI_RENAMES.values())]
+    return raw.rename(columns=_UCI_RENAMES)[list(COLUMNS)]
 
 
 def load_dataset(path: Path) -> pd.DataFrame:
