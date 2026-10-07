@@ -70,6 +70,7 @@ def test_delinquency_features(
 
 def test_row_wise_features_do_not_depend_on_other_rows() -> None:
     one = build_features(pd.DataFrame([make_account(id=1, bill_amt_1=90_000)]))
-    many = build_features(pd.DataFrame([make_account(id=1, bill_amt_1=90_000),
-                                        make_account(id=2, limit_bal=5_000)]))  # fmt: skip
+    many = build_features(
+        pd.DataFrame([make_account(id=1, bill_amt_1=90_000), make_account(id=2, limit_bal=5_000)])
+    )
     pd.testing.assert_series_equal(one.iloc[0], many.iloc[0])

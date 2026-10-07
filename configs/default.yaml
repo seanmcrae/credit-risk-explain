@@ -41,7 +41,8 @@ economics:
   cure_rate_if_worked: 0.10        # share of defaulters a contact prevents from defaulting
 
 ranking:
-  capacity: 1000         # accounts the team can work per cycle (CLI default)
+  capacity: 500                  # accounts the team can work per cycle (default for `rank`)
+  eval_capacity_percent: 20      # capacity used for holdout economics and fairness, as % of accounts
   top_k_percents: [1, 5, 10, 20]
 
 explain:

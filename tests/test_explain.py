@@ -29,8 +29,13 @@ def test_every_feature_maps_to_exactly_one_reason() -> None:
 
 
 def test_reason_codes_aggregate_group_and_rank() -> None:
-    contrib = _row(utilization_recent=0.3, utilization_max=0.2, pay_status_recent=0.4,
-                   months_zero_payment=0.1, log_limit=-0.9)  # fmt: skip
+    contrib = _row(
+        utilization_recent=0.3,
+        utilization_max=0.2,
+        pay_status_recent=0.4,
+        months_zero_payment=0.1,
+        log_limit=-0.9,
+    )
     values = _row(utilization_recent=0.95, pay_status_recent=2)
     codes = reason_codes(contrib, values, n=4)
     assert [c.code for c in codes] == ["R03", "R01", "R06"]
@@ -40,8 +45,13 @@ def test_reason_codes_aggregate_group_and_rank() -> None:
 
 
 def test_reason_codes_exclude_net_favourable_groups_and_respect_n() -> None:
-    contrib = _row(payment_ratio_recent=0.5, payment_ratio_mean=-0.7,  # net -0.2 -> excluded
-                   max_delay=0.3, utilization_trend=0.2, log_limit=0.1)  # fmt: skip
+    contrib = _row(
+        payment_ratio_recent=0.5,
+        payment_ratio_mean=-0.7,  # net -0.2 -> excluded
+        max_delay=0.3,
+        utilization_trend=0.2,
+        log_limit=0.1,
+    )
     codes = reason_codes(contrib, _row(), n=2)
     assert [c.code for c in codes] == ["R02", "R04"]
 
@@ -65,8 +75,9 @@ def test_attributions_sum_to_model_log_odds(name: str) -> None:
     X = splits.X_test.iloc[:40]
     attr = attribute(model, X, splits.X_train)
     raw = np.clip(model.raw_score(X), 1e-12, 1 - 1e-12)
-    np.testing.assert_allclose(attr.base_value + attr.values.sum(axis=1), np.log(raw / (1 - raw)),
-                               atol=1e-5)  # fmt: skip
+    np.testing.assert_allclose(
+        attr.base_value + attr.values.sum(axis=1), np.log(raw / (1 - raw)), atol=1e-5
+    )
     assert global_importance(attr).index[0] in FEATURES
     table = reason_table(attr, n=3)
     assert list(table.index) == list(X.index)

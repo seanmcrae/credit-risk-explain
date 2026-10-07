@@ -54,7 +54,8 @@ class EconomicsConfig:
 
 @dataclass(frozen=True)
 class RankingConfig:
-    capacity: int = 1000
+    capacity: int = 500
+    eval_capacity_percent: float = 20.0
     top_k_percents: tuple[float, ...] = (1, 5, 10, 20)
 
 

@@ -32,8 +32,9 @@ def generate_synthetic(n: int, seed: int = 0) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
 
     sex = rng.choice([1, 2], size=n, p=[0.4, 0.6])
-    education = rng.choice([1, 2, 3, 4, 5, 6, 0], size=n,
-                           p=[0.35, 0.465, 0.16, 0.005, 0.01, 0.005, 0.005])  # fmt: skip
+    education = rng.choice(
+        [1, 2, 3, 4, 5, 6, 0], size=n, p=[0.35, 0.465, 0.16, 0.005, 0.01, 0.005, 0.005]
+    )
     marriage = rng.choice([1, 2, 3, 0], size=n, p=[0.45, 0.53, 0.015, 0.005])
     age = np.clip(21 + rng.gamma(shape=3.0, scale=4.5, size=n) + 4 * (marriage == 1), 21, 79)
     age = age.astype(int)
