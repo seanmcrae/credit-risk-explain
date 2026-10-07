@@ -73,3 +73,21 @@ def test_calibrator_fixes_systematic_overconfidence(method: str) -> None:
 def test_unfitted_calibrator_raises() -> None:
     with pytest.raises(RuntimeError):
         Calibrator("isotonic").transform(np.array([0.5]))
+
+
+def test_isotonic_never_outputs_certainty_and_stays_monotone() -> None:
+    # The top 30 scores are all defaults and the bottom 30 all non-defaults: plain isotonic
+    # regression would output exactly 1.0 and 0.0 there.
+    raw = np.linspace(0.01, 0.99, 300)
+    y = np.r_[np.zeros(30), (np.random.default_rng(1).random(240) < raw[30:270]), np.ones(30)]
+    cal = Calibrator("isotonic").fit(raw, y)
+    grid = cal.transform(np.linspace(0, 1, 1_001))
+    assert grid.min() > 0 and grid.max() < 1
+    assert grid.max() == pytest.approx(31 / 32, abs=0.03)
+    assert (np.diff(grid) >= 0).all()
+
+
+def test_isotonic_clips_scores_outside_calibration_range() -> None:
+    cal = Calibrator("isotonic").fit(np.array([0.2, 0.4, 0.6, 0.8]), np.array([0, 0, 1, 1]))
+    assert cal.transform(np.array([0.0]))[0] == cal.transform(np.array([0.2]))[0]
+    assert cal.transform(np.array([1.0]))[0] == cal.transform(np.array([0.8]))[0]

@@ -75,11 +75,18 @@ def build_lightgbm(
 
 
 class Calibrator:
-    """Maps raw model probabilities to calibrated default probabilities."""
+    """Maps raw model probabilities to calibrated default probabilities.
+
+    Isotonic levels are Laplace-smoothed per block, ``(events + 1) / (accounts + 2)``. Plain
+    isotonic regression assigns exactly 0 or 1 to small pure blocks at the extremes, which is
+    overconfident and reads badly in a queue ("probability 1.000"). Smoothing shrinks small blocks
+    toward 0.5 and leaves large blocks essentially unchanged; a running maximum restores
+    monotonicity if smoothing ever reorders neighbouring blocks.
+    """
 
     def __init__(self, method: CalibrationMethod) -> None:
         self.method = method
-        self._isotonic: IsotonicRegression | None = None
+        self._knots: tuple[np.ndarray, np.ndarray] | None = None
         self._platt: LogisticRegression | None = None
 
     @staticmethod
@@ -87,17 +94,26 @@ class Calibrator:
         p = np.clip(p, _EPS, 1 - _EPS)
         return np.asarray(np.log(p / (1 - p))).reshape(-1, 1)
 
+    def _fit_isotonic(self, raw: np.ndarray, y: np.ndarray) -> None:
+        iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip").fit(raw, y)
+        fitted = iso.predict(raw)
+        levels, block = np.unique(fitted, return_inverse=True)
+        smoothed = (np.bincount(block, weights=y) + 1) / (np.bincount(block) + 2)
+        knot_levels = smoothed[np.searchsorted(levels, iso.y_thresholds_)]
+        self._knots = (iso.X_thresholds_, np.maximum.accumulate(knot_levels))
+
     def fit(self, raw: np.ndarray, y: np.ndarray) -> Calibrator:
+        raw, y = np.asarray(raw, dtype=float), np.asarray(y, dtype=float)
         if self.method == "isotonic":
-            self._isotonic = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
-            self._isotonic.fit(raw, y)
+            self._fit_isotonic(raw, y)
         else:
             self._platt = LogisticRegression(C=1e6).fit(self._logit(raw), y)
         return self
 
     def transform(self, raw: np.ndarray) -> np.ndarray:
-        if self._isotonic is not None:
-            return np.asarray(self._isotonic.predict(raw))
+        raw = np.asarray(raw, dtype=float)
+        if self._knots is not None:
+            return np.asarray(np.interp(raw, *self._knots))
         if self._platt is not None:
             return np.asarray(self._platt.predict_proba(self._logit(raw))[:, 1])
         raise RuntimeError("calibrator is not fitted")
