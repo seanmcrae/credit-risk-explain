@@ -176,7 +176,8 @@ def queue_dashboard(
 ) -> Figure:
     """Static stand-in for the app: queue head, one account's waterfall, gains and reliability."""
     fig = plt.figure(figsize=(15, 9.5), layout="constrained")
-    top, bottom = np.ravel(fig.subfigures(2, 1, height_ratios=[1, 1.1]))
+    rows = fig.add_gridspec(2, 1, height_ratios=[1, 1.1])
+    top, bottom = fig.add_subfigure(rows[0]), fig.add_subfigure(rows[1])
     table_ax = top.add_subplot()
     table_ax.axis("off")
     wf_ax, lift_ax, rel_ax = bottom.subplots(1, 3, width_ratios=[1.5, 1, 1])

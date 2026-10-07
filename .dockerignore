@@ -1,0 +1,9 @@
+.venv
+.git
+artifacts
+data/raw
+**/__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.coverage

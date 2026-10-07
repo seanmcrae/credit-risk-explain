@@ -1,5 +1,5 @@
 [project]
-name = "explainable-credit-ranking"
+name = "credit-risk-explain"
 version = "0.1.0"
 description = "Explainable, calibrated default-risk ranking for prioritizing a capacity-limited credit work queue, with reason codes, fairness slices and a generated model card."
 readme = "README.md"
