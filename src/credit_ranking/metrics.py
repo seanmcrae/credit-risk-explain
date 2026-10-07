@@ -18,13 +18,17 @@ from credit_ranking.config import EconomicsConfig
 FloatArray = np.ndarray
 
 
-def _as_arrays(y: FloatArray, score: FloatArray) -> tuple[FloatArray, FloatArray]:
+def _as_arrays(
+    y: FloatArray, score: FloatArray, both_classes: bool = False
+) -> tuple[FloatArray, FloatArray]:
     y_arr = np.asarray(y, dtype=float)
     s_arr = np.asarray(score, dtype=float)
-    if y_arr.shape != s_arr.shape or y_arr.ndim != 1:
-        raise ValueError("y and score must be 1-D arrays of equal length")
+    if y_arr.shape != s_arr.shape or y_arr.ndim != 1 or len(y_arr) == 0:
+        raise ValueError("y and score must be non-empty 1-D arrays of equal length")
     if not np.isin(y_arr, (0.0, 1.0)).all():
         raise ValueError("y must be binary 0/1")
+    if both_classes and not 0 < y_arr.sum() < len(y_arr):
+        raise ValueError("metric needs at least one event and one non-event")
     return y_arr, s_arr
 
 
@@ -34,11 +38,11 @@ def rank_order(score: FloatArray) -> FloatArray:
 
 
 def roc_auc(y: FloatArray, score: FloatArray) -> float:
-    return float(roc_auc_score(*_as_arrays(y, score)))
+    return float(roc_auc_score(*_as_arrays(y, score, both_classes=True)))
 
 
 def pr_auc(y: FloatArray, score: FloatArray) -> float:
-    return float(average_precision_score(*_as_arrays(y, score)))
+    return float(average_precision_score(*_as_arrays(y, score, both_classes=True)))
 
 
 def ks_statistic(y: FloatArray, score: FloatArray) -> float:
@@ -46,7 +50,7 @@ def ks_statistic(y: FloatArray, score: FloatArray) -> float:
 
     Evaluated only at distinct score values so tied scores are never split.
     """
-    y_arr, s_arr = _as_arrays(y, score)
+    y_arr, s_arr = _as_arrays(y, score, both_classes=True)
     order = rank_order(s_arr)
     y_sorted, s_sorted = y_arr[order], s_arr[order]
     cum_pos = np.cumsum(y_sorted) / y_sorted.sum()
@@ -56,7 +60,10 @@ def ks_statistic(y: FloatArray, score: FloatArray) -> float:
 
 
 def top_k_count(n: int, percent: float) -> int:
-    return max(1, math.ceil(n * percent / 100))
+    """Accounts in the top ``percent``; never zero and never more than ``n``."""
+    if not 0 < percent <= 100:
+        raise ValueError(f"percent must be in (0, 100], got {percent}")
+    return min(n, max(1, math.ceil(n * percent / 100)))
 
 
 def precision_at_top_percent(y: FloatArray, score: FloatArray, percent: float) -> float:
@@ -66,7 +73,7 @@ def precision_at_top_percent(y: FloatArray, score: FloatArray, percent: float) -
 
 
 def recall_at_top_percent(y: FloatArray, score: FloatArray, percent: float) -> float:
-    y_arr, s_arr = _as_arrays(y, score)
+    y_arr, s_arr = _as_arrays(y, score, both_classes=True)
     k = top_k_count(len(y_arr), percent)
     return float(y_arr[rank_order(s_arr)[:k]].sum() / y_arr.sum())
 
@@ -81,7 +88,7 @@ def assign_deciles(score: FloatArray, n_bins: int = 10) -> FloatArray:
 
 def lift_table(y: FloatArray, score: FloatArray, n_bins: int = 10) -> pd.DataFrame:
     """Per-bucket event rate, lift and cumulative capture, ordered from riskiest bucket."""
-    y_arr, s_arr = _as_arrays(y, score)
+    y_arr, s_arr = _as_arrays(y, score, both_classes=True)
     frame = pd.DataFrame({"bucket": assign_deciles(s_arr, n_bins), "y": y_arr, "score": s_arr})
     table = frame.groupby("bucket").agg(
         accounts=("y", "size"),

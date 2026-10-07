@@ -78,3 +78,16 @@ def test_checksum_verification() -> None:
     verify_checksum(payload, hashlib.sha256(payload).hexdigest())
     with pytest.raises(ValueError, match="checksum"):
         verify_checksum(payload, "0" * 64)
+
+
+def test_schema_rejects_duplicate_ids_and_missing_columns(account_frame: pd.DataFrame) -> None:
+    dup = account_frame.assign(id=1)
+    with pytest.raises(pandera.errors.SchemaErrors):
+        validate(dup)
+    with pytest.raises(pandera.errors.SchemaErrors):
+        validate(account_frame.drop(columns="pay_status_3"))
+
+
+def test_schema_coerces_numeric_strings(account_frame: pd.DataFrame) -> None:
+    out = validate(account_frame.astype({"limit_bal": str}))
+    assert out["limit_bal"].dtype == float

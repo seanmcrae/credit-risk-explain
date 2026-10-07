@@ -74,3 +74,11 @@ def test_row_wise_features_do_not_depend_on_other_rows() -> None:
         pd.DataFrame([make_account(id=1, bill_amt_1=90_000), make_account(id=2, limit_bal=5_000)])
     )
     pd.testing.assert_series_equal(one.iloc[0], many.iloc[0])
+
+
+def test_credit_balance_months_are_handled() -> None:
+    # Negative bills (customer in credit) give negative utilization and count as nothing owed.
+    f = _features(bill_amt_1=-500, bill_amt_2=-200, pay_amt_1=0)
+    assert f["utilization_recent"] == pytest.approx(-0.005)
+    assert f["payment_ratio_recent"] == 1.0
+    assert f["months_zero_payment"] == 0  # the unpaid month had nothing owed

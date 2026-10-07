@@ -62,6 +62,8 @@ def build_queue(
     bundle: ModelBundle, accounts: pd.DataFrame, capacity: int | None = None
 ) -> pd.DataFrame:
     """Score accounts and return them in work order with probability, decile and top reasons."""
+    if capacity is not None and capacity < 1:
+        raise ValueError(f"capacity must be at least 1, got {capacity}")
     features = prepare(accounts)
     raw = bundle.champion.raw_score(features)
     order = np.argsort(-raw, kind="stable")

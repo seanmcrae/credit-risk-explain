@@ -142,7 +142,9 @@ def explain_cmd(
 def rank_cmd(
     artifacts: ArtifactsOpt = Path("artifacts/run"),
     data: DataOpt = None,
-    capacity: Annotated[int | None, typer.Option(help="Accounts to work (config default).")] = None,
+    capacity: Annotated[
+        int | None, typer.Option(min=1, help="Accounts to work (config default).")
+    ] = None,
     out: Annotated[
         Path | None, typer.Option(help="CSV path (default <artifacts>/queue.csv).")
     ] = None,

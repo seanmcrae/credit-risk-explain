@@ -82,3 +82,10 @@ def test_attributions_sum_to_model_log_odds(name: str) -> None:
     table = reason_table(attr, n=3)
     assert list(table.index) == list(X.index)
     assert table["reason_codes"].str.count("R").max() <= 3
+
+
+def test_reason_codes_n_zero_and_ties_are_stable() -> None:
+    contrib = _row(utilization_trend=0.2, months_zero_payment=0.2)
+    assert reason_codes(contrib, _row(), n=0) == []
+    # Equal contributions keep REASONS order, so output never flips between runs.
+    assert [c.code for c in reason_codes(contrib, _row(), n=2)] == ["R04", "R06"]

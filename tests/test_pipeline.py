@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from credit_ranking.pipeline import TrainResult, load_holdout, load_metrics, save_figures
 from credit_ranking.queue import ModelBundle, build_queue, explain_account
@@ -74,3 +75,30 @@ def test_figures_render(trained_run: TrainResult, tmp_path: Path) -> None:
         "queue_dashboard.png",
     }
     assert all(p.stat().st_size > 10_000 for p in paths)
+
+
+def test_queue_rejects_non_positive_capacity(trained_run: TrainResult) -> None:
+    bundle = ModelBundle.load(trained_run.out_dir)
+    with pytest.raises(ValueError, match="capacity"):
+        build_queue(bundle, load_holdout(trained_run.out_dir), capacity=0)
+
+
+def test_queue_capacity_larger_than_population_returns_everyone(trained_run: TrainResult) -> None:
+    bundle = ModelBundle.load(trained_run.out_dir)
+    holdout = load_holdout(trained_run.out_dir).head(20)
+    assert len(build_queue(bundle, holdout, capacity=500)) == 20
+
+
+def test_unknown_account_raises(trained_run: TrainResult) -> None:
+    bundle = ModelBundle.load(trained_run.out_dir)
+    with pytest.raises(KeyError):
+        explain_account(bundle, load_holdout(trained_run.out_dir), -1)
+
+
+def test_deciles_reference_holdout_population(trained_run: TrainResult) -> None:
+    bundle = ModelBundle.load(trained_run.out_dir)
+    scores = pd.read_csv(trained_run.out_dir / "holdout_scores.csv")
+    counts = scores["decile"].value_counts()
+    assert set(counts.index) == set(range(1, 11))
+    assert counts.max() - counts.min() <= 2  # quantile edges split the holdout evenly
+    assert bundle.decile(np.array([1.0]))[0] == 1 and bundle.decile(np.array([0.0]))[0] == 10

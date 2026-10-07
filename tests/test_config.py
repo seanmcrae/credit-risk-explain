@@ -19,3 +19,14 @@ def test_break_even_probability() -> None:
 def test_invalid_monotone_direction_rejected() -> None:
     with pytest.raises(ValueError, match="monotone"):
         Config.from_dict({"monotone_constraints": {"max_delay": 2}})
+
+
+def test_unknown_config_keys_fail_loudly() -> None:
+    with pytest.raises(TypeError):
+        Config.from_dict({"split": {"test_fraction": 0.3}})
+
+
+def test_partial_config_uses_defaults() -> None:
+    cfg = Config.from_dict({"seed": 7})
+    assert cfg.seed == 7
+    assert cfg.calibration.method == "isotonic"

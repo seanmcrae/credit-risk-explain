@@ -108,3 +108,41 @@ def test_prospective_expected_value_breaks_even_at_threshold() -> None:
     econ = EconomicsConfig(cost_per_contact=60, loss_given_default=4000, cure_rate_if_worked=0.1)
     ev = expected_value_from_probabilities(np.array([0.0, 0.15, 0.5]), econ)
     assert ev.tolist() == pytest.approx([-60.0, 0.0, 140.0])
+
+
+@pytest.mark.parametrize("metric", [ks_statistic, roc_auc, lift_table])
+def test_single_class_outcomes_rejected(metric) -> None:  # type: ignore[no-untyped-def]
+    with pytest.raises(ValueError, match="one event"):
+        metric(np.zeros(5), np.linspace(0, 1, 5))
+
+
+def test_empty_input_rejected() -> None:
+    with pytest.raises(ValueError, match="non-empty"):
+        precision_at_top_percent(np.array([]), np.array([]), 10)
+
+
+def test_top_k_bounds() -> None:
+    from credit_ranking.metrics import top_k_count
+
+    assert top_k_count(1_000, 0.01) == 1
+    assert top_k_count(7, 100) == 7
+    with pytest.raises(ValueError):
+        top_k_count(10, 0)
+
+
+def test_lift_table_with_fewer_accounts_than_buckets() -> None:
+    table = lift_table(np.array([1, 0, 0]), np.array([0.9, 0.5, 0.1]), n_bins=10)
+    assert table["accounts"].sum() == 3
+    assert table["capture_rate"].iloc[-1] == 1.0
+
+
+def test_psi_handles_constant_reference() -> None:
+    value = psi(np.full(100, 0.3), np.linspace(0, 1, 100))
+    assert np.isfinite(value) and value > 0
+
+
+def test_expected_value_when_nobody_is_worth_working() -> None:
+    econ = EconomicsConfig(cost_per_contact=1_000, loss_given_default=100, cure_rate_if_worked=0.1)
+    choice = expected_value_curve(Y, S, econ)
+    assert choice.optimal_capacity == 0
+    assert choice.optimal_value == 0
