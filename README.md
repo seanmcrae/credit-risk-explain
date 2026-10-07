@@ -1,37 +1,48 @@
 # credit-risk-explain
 
-![CI](https://github.com/seanmcrae/credit-risk-explain/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/seanmcrae/credit-risk-explain/actions/workflows/ci.yml/badge.svg)](https://github.com/seanmcrae/credit-risk-explain/actions/workflows/ci.yml)
+[![Docs](https://github.com/seanmcrae/credit-risk-explain/actions/workflows/pages.yml/badge.svg)](https://seanmcrae.github.io/credit-risk-explain/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.11 | 3.12](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
+
+Calibrated, explainable default-risk ranking for a credit work queue that can only reach a
+fraction of its accounts, with a reason code on every account and a fairness audit published
+with the model.
+
+**Live docs:** [seanmcrae.github.io/credit-risk-explain](https://seanmcrae.github.io/credit-risk-explain/)
+(results, fairness findings, [model card](docs/MODEL_CARD.md), [product brief](docs/PRODUCT.md)).
 
 A collections or outreach team can only work a fraction of its accounts each cycle, and every
-account it chooses has to be defensible. This repository ranks a credit work queue by calibrated
-default risk, attaches adverse-action-style reason codes to every account, picks the queue size
-from an explicit cost/benefit matrix, audits the ranking across protected groups, and writes the
-model card from the same run. It is built on the public UCI "Default of Credit Card Clients"
-dataset, with a seeded synthetic generator so everything runs offline in CI.
+account it chooses has to be defensible. This repository ranks the queue by calibrated default
+risk, attaches adverse-action-style reason codes to every account, picks the queue size from an
+explicit cost/benefit matrix, audits the ranking across protected groups, and writes the model
+card from the same run. It is built on the public UCI "Default of Credit Card Clients" dataset,
+with a seeded synthetic generator so everything runs offline in CI.
 
 On the real UCI data (6,000-account stratified holdout), the monotone-constrained LightGBM ranker
 reaches ROC-AUC 0.778 and captures 50.7% of next-month defaulters in the riskiest 20% of the
-queue, against 48.2% for the logistic-regression baseline. Calibrated ECE is 0.010.
-Full numbers are in [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
+queue, against 48.2% for the logistic-regression baseline. Calibrated ECE is 0.010. The largest
+fairness gap is by age: 60.6% of defaulters aged 18-24 are prioritized versus 42.6% for 55+.
 
 ![Queue dashboard on the UCI holdout](docs/img/queue_dashboard.png)
 
 ## Quickstart
 
-Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.11+, [uv](https://docs.astral.sh/uv/) and `make`. One command trains, ranks
+and explains on the bundled synthetic sample:
 
 ```bash
-git clone https://github.com/seanmcrae/credit-risk-explain.git
-cd credit-risk-explain
-make install        # uv sync --all-extras
-make demo           # train, rank and explain on the bundled synthetic sample
-make app            # Streamlit queue viewer on http://localhost:8501
+git clone https://github.com/seanmcrae/credit-risk-explain.git && cd credit-risk-explain && make install demo
 ```
 
-Real data (about 5 MB from UCI, checksum-verified, written to `data/raw/` and never committed):
+Then:
 
 ```bash
-make train-uci      # download, train, regenerate docs/MODEL_CARD.md and docs/img/
+make app            # Streamlit queue viewer on http://localhost:8501
+make train-uci      # download UCI data (about 5 MB, checksum-verified, never committed),
+                    # train, and regenerate docs/MODEL_CARD.md, docs/img/ and docs/results/
+make site           # build the docs site into site/ (offline)
+make check          # lint, format check, mypy, tests: the same gates as CI
 ```
 
 The CLI covers the rest of the workflow:
@@ -47,6 +58,23 @@ uv run credit-rank model-card --artifacts artifacts/uci --out docs/MODEL_CARD.md
 
 `docker build -t credit-risk-explain . && docker run -p 8501:8501 credit-risk-explain` trains on
 the synthetic sample at build time and serves the app.
+
+## Features
+
+- **Two models, one holdout.** Logistic-regression baseline and LightGBM with monotone
+  constraints on the risk drivers an analyst would defend, scored on the same stratified test set.
+- **Calibrated probabilities.** Laplace-smoothed isotonic (or Platt) calibration fitted on its own
+  split, with ECE and reliability curves.
+- **Reason codes on every account.** Exact SHAP contributions grouped into seven plain-language
+  reasons; only reasons that raise risk are cited.
+- **Queue economics.** Expected value by queue size under a configurable contact cost, loss given
+  default and cure rate, with the value-maximizing capacity.
+- **Fairness audit.** Priority rate, TPR and FPR at capacity, calibration gap and AUC for sex, age
+  band, education and marital status, plus a proxy screen that traces the largest gap to features.
+- **Generated model card.** Every number in [docs/MODEL_CARD.md](docs/MODEL_CARD.md) is rendered
+  from the run's `metrics.json`.
+- **CLI, app and docs site.** `credit-rank` for batch use, a Streamlit viewer for analysts, and an
+  offline static site deployed to GitHub Pages.
 
 ## Example output
 
@@ -71,6 +99,11 @@ Queue of 50 of 1,000 accounts -> artifacts/demo/queue.csv
     3 3081        0.800       1 R05;R01;R03;R02 Payments are small relative to the balance owed
     4 3813        0.800       1 R05;R01;R03;R02 Payments are small relative to the balance owed
     5 3153        0.765       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    6 1855        0.750       1 R03;R05;R01;R02        Balance is high relative to credit limit
+    7 2646        0.750       1 R03;R01;R05;R02        Balance is high relative to credit limit
+    8 3465        0.750       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    9 2341        0.750       1 R01;R05;R03;R02                 Most recent payment is past due
+   10 3334        0.750       1 R05;R01;R03;R02 Payments are small relative to the balance owed
 Account 2185: P(default)=0.800  decile=1
 Reasons:
   R05 Payments are small relative to the balance owed  [payment_to_limit_mean=0.00, +1.66]
@@ -86,7 +119,10 @@ Largest contributions (log-odds):
   -0.396  Average six-month balance-to-limit ratio = 0.92
 ```
 
-The same commands on the real UCI data (`make train-uci`):
+## Results
+
+`make train-uci` on the UCI data. Holdout of 6,000 accounts; the full tables are in the
+[model card](docs/MODEL_CARD.md).
 
 | Holdout metric (UCI, 6,000 accounts) | LightGBM (champion) | Logistic regression |
 |---|---|---|
@@ -98,6 +134,13 @@ The same commands on the real UCI data (`make train-uci`):
 | Calibrated ECE | 0.010 | 0.009 |
 | Expected value at 20% capacity (illustrative economics) | 197,200 | 184,000 |
 
+| Fairness at 20% capacity (UCI holdout) | Priority-rate ratio | TPR gap | FPR gap | Max abs calibration gap |
+|---|---|---|---|---|
+| age_band | 0.65 | 0.180 | 0.077 | 0.029 |
+| education | 0.67 | 0.085 | 0.053 | 0.008 |
+| marriage | 0.95 | 0.015 | 0.002 | 0.023 |
+| sex | 0.94 | 0.036 | 0.016 | 0.011 |
+
 | Cumulative capture | Reliability |
 |---|---|
 | ![Cumulative capture](docs/img/lift_curve.png) | ![Reliability](docs/img/reliability_curve.png) |
@@ -105,6 +148,29 @@ The same commands on the real UCI data (`make train-uci`):
 | SHAP summary | Expected value by queue size |
 |---|---|
 | ![SHAP summary](docs/img/shap_summary.png) | ![Expected value](docs/img/expected_value.png) |
+
+![TPR at capacity by group and the features behind the age gap](docs/img/fairness.png)
+
+## How evaluation works
+
+- **Split.** Stratified train / calibration / test (65% / 15% / 20%, seed 42). Models never see
+  the calibration or test rows; the calibrator never sees the test rows.
+- **Ranking quality.** ROC-AUC, PR-AUC and KS on the raw score; lift and cumulative capture by
+  decile; precision at the top 1%, 5%, 10% and 20% of the queue.
+- **Probability quality.** Brier score and 10-bin ECE before and after calibration, plus a
+  reliability curve.
+- **Decision value.** For every queue size, expected value from realized holdout outcomes:
+  defaulters worked times cure rate times loss given default, minus contact cost for every account
+  worked. Capacity for the headline numbers is 20% of the holdout.
+- **Fairness.** At the same 20% capacity, per group: priority rate, TPR and FPR, calibration gap
+  and AUC. Slices under 100 accounts are flagged and excluded from the summary. For the attribute
+  with the widest TPR gap, mean SHAP contributions among each group's defaulters show which
+  features carry it.
+- **Stability.** PSI of champion scores between training and holdout; `evaluate --data` reports
+  PSI for any new labeled file.
+- **Tests.** Hand-computed cases for KS, lift, expected value and the fairness metrics; SHAP
+  additivity; monotonicity; determinism; invariance of scores to protected attributes; CLI, app
+  and site smoke tests. All offline, on synthetic data.
 
 ## Architecture
 
@@ -143,6 +209,7 @@ flowchart TB
 | `fairness.py` | Per-group priority rate, TPR/FPR at capacity, calibration gap, slice AUC |
 | `queue.py` | Saved model bundle, queue building, single-account explanations |
 | `pipeline.py`, `model_card.py`, `plots.py`, `cli.py` | Orchestration, generated model card, charts, typer CLI |
+| `docsite/` | Offline static site: README sections, rendered docs, results snapshot, SVG diagram |
 
 ## Design decisions
 
@@ -183,6 +250,35 @@ flowchart TB
   `generate_synthetic(5000, seed=7)`. Relationships are hand-specified to be plausible, not fitted
   to the real data. Tests and CI use synthetic data only; no test touches the network.
 
+## Configuration
+
+Every tunable lives in [configs/default.yaml](configs/default.yaml); pass another file with
+`--config`. A run is reproducible from (data, config, seed), and the resolved config is stored in
+the run's `metrics.json`.
+
+| Section | Controls |
+|---|---|
+| `seed`, `split` | Random seed; test and calibration shares |
+| `models` | Champion choice and hyperparameters for both models; monotone constraints on or off |
+| `monotone_constraints` | Direction (+1 / -1) enforced per feature |
+| `calibration` | `isotonic` or `platt`; bins for ECE and reliability curves |
+| `economics` | Contact cost, loss given default, cure rate if worked (illustrative values) |
+| `ranking` | Default queue capacity, evaluation capacity (% of accounts), precision cut-offs |
+| `explain` | Reason codes per account |
+
+## Project layout
+
+```text
+src/credit_ranking/   library and CLI (schema, features, models, metrics, explain, fairness, ...)
+src/credit_ranking/docsite/   static site generator and templates
+app/                  Streamlit queue viewer
+configs/default.yaml  run configuration
+data/sample/          bundled SYNTHETIC sample (data/raw/ holds the UCI download, git-ignored)
+docs/                 PRODUCT.md, generated MODEL_CARD.md, charts (img/), results snapshot (results/)
+scripts/              UCI download and synthetic-sample scripts
+tests/                unit and integration tests (offline, seeded)
+```
+
 ## Limitations
 
 - One 2005 snapshot from one market: no out-of-time validation, seasonality or drift, and no
@@ -201,6 +297,12 @@ flowchart TB
 
 Product framing, success metrics and the now/next/later roadmap (drift monitoring,
 champion/challenger, uplift) are in [docs/PRODUCT.md](docs/PRODUCT.md).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and ground rules, [SECURITY.md](SECURITY.md) for
+reporting vulnerabilities and [CHANGELOG.md](CHANGELOG.md) for release notes. If you use this
+work, [CITATION.cff](CITATION.cff) has the citation.
 
 ## License
 

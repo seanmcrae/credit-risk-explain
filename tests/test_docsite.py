@@ -48,6 +48,20 @@ def test_flowchart_labels_and_errors() -> None:
         layers(parse("flowchart LR\n A --> B\n B --> A"))
 
 
+def test_readme_quotes_the_current_results() -> None:
+    m = json.loads(RESULTS.read_text())
+    champ, base = m["models"]["LightGBM"], m["models"]["Logistic regression"]
+    readme = (ROOT / "README.md").read_text()
+    for value in (
+        f"ROC-AUC {champ['roc_auc']:.3f}",
+        f"captures {pct(champ['recall_at_top_pct']['20'])}",
+        f"against {pct(base['recall_at_top_pct']['20'])}",
+        f"Calibrated ECE is {champ['ece']:.3f}",
+        f"| {champ['ev_at_eval_capacity']:,.0f} | {base['ev_at_eval_capacity']:,.0f} |",
+    ):
+        assert value in readme, value
+
+
 def test_rewrite_links_targets_site_pages_and_repo() -> None:
     md = (
         "[card](docs/MODEL_CARD.md) ![c](docs/img/lift_curve.png) [lic](LICENSE) "
@@ -85,6 +99,7 @@ def test_site_numbers_come_from_the_results_snapshot(built_site: Path) -> None:
     assert "Fairness findings" in index and "Where the gap comes from" in index
     assert "Queue of 50 of 1,000 accounts" in index
     assert 'class="flowchart"' in index
+    assert 'id="how-evaluation-works"' in index and 'id="features"' in index
 
 
 def test_site_is_self_contained(built_site: Path) -> None:

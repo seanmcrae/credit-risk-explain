@@ -24,6 +24,7 @@ REPO_URL = "https://github.com/seanmcrae/credit-risk-explain"
 README_SECTIONS = (
     "Features",
     "Quickstart",
+    "How evaluation works",
     "Architecture",
     "Design decisions",
     "Data",

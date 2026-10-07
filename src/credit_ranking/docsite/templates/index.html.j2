@@ -71,6 +71,10 @@
       <figure class="wide"><img src="img/shap_summary.png" alt="SHAP summary of feature contributions on the holdout"><figcaption>Exact TreeSHAP contributions in log-odds. Reason codes group these features and cite only the groups that raise an account's risk.</figcaption></figure>
       <figure class="wide"><img src="img/queue_dashboard.png" alt="Static queue dashboard: top of the queue, one account's waterfall, capture and reliability"><figcaption>The top of the holdout queue with the first account's SHAP waterfall, as the CLI and Streamlit viewer present it.</figcaption></figure>
       <p>Score PSI between training and holdout is {{ results.psi }}. Full definitions and every table are in the <a href="model-card.html">model card</a>.</p>
+      {% if sections.get("How evaluation works") %}
+      <h3 id="how-evaluation-works">How evaluation works</h3>
+{{ sections["How evaluation works"] | safe }}
+      {% endif %}
     </section>
 
     <section class="wrap prose" id="fairness">
