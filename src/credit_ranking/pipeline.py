@@ -9,6 +9,7 @@ from typing import Any
 
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
 
 from credit_ranking import plots
 from credit_ranking.config import Config, ModelName
@@ -19,7 +20,7 @@ from credit_ranking.fairness import disparity_summary, slice_metrics
 from credit_ranking.features import build_features
 from credit_ranking.metrics import lift_table, psi, top_k_count
 from credit_ranking.models import ScoredModel, stratified_split, train_model
-from credit_ranking.queue import ModelBundle, decile_edges
+from credit_ranking.queue import ModelBundle, build_queue, decile_edges, explain_account
 from credit_ranking.schema import ID, TARGET
 
 MODEL_LABELS: dict[ModelName, str] = {
@@ -158,6 +159,7 @@ def save_figures(result: TrainResult, img_dir: Path) -> list[Path]:
         ),
         "expected_value.png": plots.expected_value_plot(y, champ.raw_score(X), cfg.economics),
         "shap_summary.png": plots.shap_summary(result.bundle.attribution(X)),
+        "queue_dashboard.png": _dashboard(result, holdout),
     }
     paths = []
     for name, fig in figures.items():
@@ -166,6 +168,24 @@ def save_figures(result: TrainResult, img_dir: Path) -> list[Path]:
         plt.close(fig)
         paths.append(path)
     return paths
+
+
+def _dashboard(result: TrainResult, holdout: pd.DataFrame) -> Figure:
+    bundle, cfg = result.bundle, result.bundle.config
+    X = build_features(holdout.set_index(ID))
+    raw = bundle.champion.raw_score(X)
+    queue = build_queue(bundle, holdout, capacity=10)
+    top = explain_account(bundle, holdout, int(queue[ID].iloc[0]))
+    return plots.queue_dashboard(
+        queue,
+        top,
+        holdout[TARGET].to_numpy(),
+        raw,
+        bundle.champion.calibrator.transform(raw),
+        cfg.ranking.eval_capacity_percent / 100,
+        cfg.calibration.n_bins,
+        title=f"Holdout work queue - {result.metrics['data']['label']}",
+    )
 
 
 def load_metrics(out_dir: Path) -> dict[str, Any]:
