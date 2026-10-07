@@ -1,0 +1,67 @@
+[project]
+name = "explainable-credit-ranking"
+version = "0.1.0"
+description = "Explainable, calibrated default-risk ranking for prioritizing a capacity-limited credit work queue, with reason codes, fairness slices and a generated model card."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Sean Wayne" }]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+    "lightgbm>=4.3",
+    "shap>=0.46",
+    "pandera>=0.20",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "matplotlib>=3.8",
+    "joblib>=1.3",
+]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.35"]
+data = ["xlrd>=2.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pandas-stubs>=2.2",
+    "types-PyYAML",
+]
+
+[project.scripts]
+credit-rank = "credit_ranking.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/credit_ranking"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "N", "PTH"]
+ignore = ["N803", "N806"]  # X / X_train are conventional ML names
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "lightgbm.*", "shap.*", "joblib.*", "pandera.*", "scipy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]
+
+[tool.coverage.run]
+source = ["credit_ranking"]

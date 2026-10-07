@@ -1,0 +1,27 @@
+# environments
+.venv/
+venv/
+env/
+node_modules/
+
+# caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# downloaded datasets and run outputs
+data/raw/
+artifacts/
+
+# secrets
+.env
+*.pem
+secrets.*
