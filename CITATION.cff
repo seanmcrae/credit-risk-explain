@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "credit-risk-explain: explainable, calibrated default-risk ranking for a credit work queue"
+abstract: >-
+  Ranks a capacity-limited credit work queue by calibrated default risk, attaches grouped
+  reason codes to every account, sizes the queue from a cost/benefit matrix, audits the ranking
+  across protected groups and generates a model card from the same run.
+authors:
+  - family-names: McRae
+    given-names: Sean
+version: 0.1.0
+date-released: 2026-10-07
+license: MIT
+repository-code: "https://github.com/seanmcrae/credit-risk-explain"
+url: "https://seanmcrae.github.io/credit-risk-explain/"
+keywords:
+  - credit risk
+  - explainability
+  - SHAP
+  - fairness
+  - model card
+references:
+  - type: article
+    title: >-
+      The comparisons of data mining techniques for the predictive accuracy of probability of
+      default of credit card clients
+    authors:
+      - family-names: Yeh
+        given-names: I-Cheng
+      - family-names: Lien
+        given-names: Che-hui
+    journal: Expert Systems with Applications
+    volume: 36
+    issue: 2
+    start: 2473
+    end: 2480
+    year: 2009
+    doi: 10.1016/j.eswa.2007.12.020
