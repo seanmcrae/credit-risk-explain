@@ -62,6 +62,25 @@ def test_readme_quotes_the_current_results() -> None:
         assert value in readme, value
 
 
+def test_readme_numbers_card_matches_the_snapshot() -> None:
+    m = json.loads(RESULTS.read_text())
+    champ, base = m["models"]["LightGBM"], m["models"]["Logistic regression"]
+    age = next(s for s in m["fairness_summary"] if s["attribute"] == "age_band")
+    readme = (ROOT / "README.md").read_text()
+    for value in (
+        f"{pct(champ['recall_at_top_pct']['20'])} for LightGBM vs "
+        f"{pct(base['recall_at_top_pct']['20'])} for the",
+        f"(ROC-AUC {champ['roc_auc']:.3f} vs {base['roc_auc']:.3f})",
+        f"{m['split']['test']:,}-account stratified holdout of {m['data']['rows']:,} UCI accounts "
+        f"({pct(m['data']['default_rate'])} default rate)",
+        f"ECE {champ['ece']:.3f} after calibration, {champ['ece_uncalibrated']:.3f} before",
+        f"{champ['ev_at_eval_capacity']:,.0f} vs {base['ev_at_eval_capacity']:,.0f} for the "
+        f"baseline and {champ['ev_work_everyone']:,.0f} for working",
+        f"age-band TPR gap {age['tpr_gap']:.3f}",
+    ):
+        assert value in readme, value
+
+
 def test_rewrite_links_targets_site_pages_and_repo() -> None:
     md = (
         "[card](docs/MODEL_CARD.md) ![c](docs/img/lift_curve.png) [lic](LICENSE) "

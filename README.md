@@ -5,8 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.11 | 3.12](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
 
-Calibrated, explainable default-risk ranking for a credit work queue that can only reach a
-fraction of its accounts, with a reason code on every account and a fairness audit published
+Decide which card accounts a collections or outreach team works this cycle, and how many: a
+calibrated default-risk queue with a reason code on every account and a fairness audit published
 with the model.
 
 **Live docs:** [seanmcrae.github.io/credit-risk-explain](https://seanmcrae.github.io/credit-risk-explain/)
@@ -23,6 +23,18 @@ On the real UCI data (6,000-account stratified holdout), the monotone-constraine
 reaches ROC-AUC 0.778 and captures 50.7% of next-month defaulters in the riskiest 20% of the
 queue, against 48.2% for the logistic-regression baseline. Calibrated ECE is 0.010. The largest
 fairness gap is by age: 60.6% of defaulters aged 18-24 are prioritized versus 42.6% for 55+.
+
+**Numbers** (UCI holdout, from the committed snapshot [docs/results/uci_metrics.json](docs/results/uci_metrics.json))
+
+- **Defaulters captured in the riskiest 20%:** 50.7% for LightGBM vs 48.2% for the
+  logistic-regression baseline (ROC-AUC 0.778 vs 0.738)
+- **Eval set:** 6,000-account stratified holdout of 30,000 UCI accounts (22.1% default rate)
+- **Calibration:** ECE 0.010 after calibration, 0.016 before
+- **Expected value at 20% capacity:** 197,200 vs 184,000 for the baseline and 170,800 for working
+  every account (illustrative economics from `configs/default.yaml`)
+- **Largest fairness gap:** age-band TPR gap 0.180, above the 0.10 target
+
+Latency and serving cost are not measured: scoring is a local batch job, not a service.
 
 ![Queue dashboard on the UCI holdout](docs/img/queue_dashboard.png)
 
@@ -150,6 +162,50 @@ Largest contributions (log-odds):
 | ![SHAP summary](docs/img/shap_summary.png) | ![Expected value](docs/img/expected_value.png) |
 
 ![TPR at capacity by group and the features behind the age gap](docs/img/fairness.png)
+
+## Where it fails
+
+Read from the UCI holdout snapshot at 20% capacity. The fairness audit drops slices under 100
+accounts from its summary; they are listed here because that is where the model is weakest.
+
+**Model and data limits**
+
+| Slice or failure mode | Holdout evidence | What it means |
+|---|---|---|
+| Age 18-24 vs 55+ | TPR 0.606 vs 0.426 (gap 0.180, target < 0.10); 18-24 calibration gap 0.029 against a 0.03 limit | Young defaulters are worked far more often; traced mainly to credit limit acting as a partial proxy for age |
+| Age 55+ | 227 accounts | Smallest audited age slice; no confidence intervals are reported, so its TPR is a noisy point estimate |
+| Education: high school | AUC 0.734 (1,014 accounts) vs 0.78-0.79 for university and graduate school | Weakest ranking among the audited slices |
+| Education: other/unknown | AUC 0.551, calibration gap 0.099 (82 accounts, excluded from the summary) | Ranking is close to random and probabilities run high for this group |
+| Marriage: other/unknown | AUC 0.679, calibration gap 0.072 (75 accounts, excluded from the summary) | Same pattern, smaller |
+| Top of the queue | Precision 86.7% in the top 1%, 69.2% in the top 10%, 56.1% in the top 20% | Most of a 20% queue's contacts are still non-defaulters |
+
+**Design and scaffolding limits**
+
+| Limit | Consequence |
+|---|---|
+| Stratified split of one six-month 2005 snapshot | No out-of-time test; the PSI of 0.002 compares train with a holdout from the same period, so it cannot show drift |
+| Baselines are LightGBM vs logistic regression only | No rule-based queue ("2+ months late", "highest balance first") is scored, so the gain over current practice is not measured |
+| Champion is fixed in config | On the bundled synthetic sample, logistic regression scores higher (AUC 0.786 vs 0.778) and LightGBM is still the champion |
+| Economics are placeholders | Expected value and the value-maximizing capacity move with the contact cost, loss given default and cure rate in config |
+
+**Considered and rejected.** Ranking the queue on the calibrated probability. Isotonic calibration
+is a step function, so on the UCI holdout its top level (0.861) ties 61 accounts and throws away
+ordering inside the block. The queue ranks on the raw score and uses the calibrated probability
+for display, economics and audits (see Design decisions and PRODUCT.md).
+
+**Known limitations**
+
+- One 2005 snapshot from one market: no out-of-time validation, seasonality or drift, and no
+  claim that the model transfers to another portfolio.
+- The target is next-month default. The queue ranks who is likely to default, not who will
+  respond to contact; an uplift model would be the right target for outreach.
+- The economics are placeholders and drive the recommended capacity.
+- On the UCI holdout, defaulters aged 18-24 are prioritized at 60.6% versus 42.6% for 55+ at 20%
+  capacity. The model card's proxy screen traces it mainly to credit limit (+0.164 log-odds for
+  18-24 defaulters relative to 55+) and recent payment status (+0.088), partly offset by
+  utilization (-0.173). The repository measures the gap; it does not apply a mitigation.
+- Reason codes explain the model, not the customer's situation, and are not legal adverse-action
+  notices.
 
 ## How evaluation works
 
@@ -279,24 +335,17 @@ scripts/              UCI download and synthetic-sample scripts
 tests/                unit and integration tests (offline, seeded)
 ```
 
-## Limitations
-
-- One 2005 snapshot from one market: no out-of-time validation, seasonality or drift, and no
-  claim that the model transfers to another portfolio.
-- The target is next-month default. The queue ranks who is likely to default, not who will
-  respond to contact; an uplift model would be the right target for outreach.
-- The economics are placeholders and drive the recommended capacity.
-- On the UCI holdout, defaulters aged 18-24 are prioritized at 60.6% versus 42.6% for 55+ at 20%
-  capacity. The model card's proxy screen traces it mainly to credit limit (+0.164 log-odds for
-  18-24 defaulters relative to 55+) and recent payment status (+0.088), partly offset by
-  utilization (-0.173). The repository measures the gap; it does not apply a mitigation.
-- Reason codes explain the model, not the customer's situation, and are not legal adverse-action
-  notices.
-
 ## Roadmap
 
 Product framing, success metrics and the now/next/later roadmap (drift monitoring,
 champion/challenger, uplift) are in [docs/PRODUCT.md](docs/PRODUCT.md).
+
+## How this was built
+
+Code was written with AI coding agents under my direction. I set the problem, success metrics and
+eval gates, and decided what shipped. Every UCI number here comes from the committed results
+snapshot produced by `make train-uci`; CI checks the README against that snapshot and reruns the
+full pipeline on the bundled synthetic sample.
 
 ## Contributing
 
