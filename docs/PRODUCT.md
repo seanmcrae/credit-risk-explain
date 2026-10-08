@@ -80,6 +80,50 @@ Evals that run on every commit (synthetic data): hand-computed KS, lift and expe
 reason-code mapping, monotonicity of the constrained model, deterministic retraining, invariance
 to protected attributes, CLI and app smoke tests.
 
+## Minimum viable quality
+
+Release thresholds for a retrained model, built on the targets in the table above. Do-not-ship is
+a hard stop; ship means every target is met; delight is the bar for a model I would promote with
+no caveats.
+
+| Metric | Do not ship | Ship | Delight |
+|---|---|---|---|
+| Capture at 20% capacity | 45% or less, or not above the baseline model | Above 45% and above the baseline model | Also above a rule-based queue (not yet scored, issue #4), on an out-of-time sample |
+| Precision in top 5% | 70% or less | Above 70% | Above 75% on an out-of-time sample |
+| Expected value at configured capacity | Not above working everyone, or not above the baseline | Above both | Above both across a sensitivity band of cure rate and loss given default |
+| Calibrated ECE (10 bins) | 0.02 or more | Below 0.02 | Below 0.01 |
+| Score PSI, development vs scoring | Above 0.25 | Below 0.1 (0.1-0.25: investigate before shipping) | Below 0.1 on an out-of-time sample |
+| TPR gap per attribute at capacity | 0.10 or more with no recorded acceptance by the program owner | Below 0.10, or documented and accepted | Below 0.10 for every attribute, no exceptions |
+| Max absolute calibration gap across groups | 0.03 or more | Below 0.03 | Below 0.02 |
+
+Against these thresholds the current UCI run meets ship on every row but one: the age-band TPR gap
+is 0.180. It is documented, but no acceptance is recorded (issue #3), so as it stands this model is
+do-not-ship until the program owner accepts the gap or a mitigation narrows it. The 18-24
+calibration gap (0.029) clears the bar by 0.001.
+
+## Cost at 1x and 10x usage
+
+Estimates only. The repo's cost assumptions are the illustrative economics in
+`configs/default.yaml`: 60 per contact, 4,000 loss given default, a 10% cure rate if worked (so
+working an account pays off above a calibrated probability of 0.15). The config names no currency.
+1x is the UCI holdout: a book of 6,000 accounts per cycle at the 22.1% default rate, worked at 20%
+capacity. 10x assumes the same default rate and the same model performance on a book ten times the
+size, which is an assumption, not a measurement.
+
+| Per cycle | 1x (6,000 accounts) | 10x (60,000 accounts) |
+|---|---|---|
+| Accounts worked at 20% capacity | 1,200 | 12,000 |
+| Contact cost | 72,000 | 720,000 |
+| Expected value at 20%, LightGBM | 197,200 | about 1,972,000 |
+| Expected value at 20%, logistic-regression baseline | 184,000 | about 1,840,000 |
+| Expected value of working every account | 170,800 | about 1,708,000 |
+| Value-maximizing capacity, LightGBM | 3,102 accounts (51.7%), 237,880 | about 31,000 accounts, about 2,378,800 |
+
+Contact cost and value scale linearly because every figure is per account; what does not scale is
+team capacity, which is why the queue size is a staffing decision rather than a model output.
+Training and scoring run as a local batch job, and the repo has no compute cost assumption, so
+compute is not costed here.
+
 ## Trade-offs and alternatives considered
 
 - **Interpretability vs accuracy.** Logistic regression is easier to defend; LightGBM is

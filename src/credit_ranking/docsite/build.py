@@ -28,7 +28,7 @@ README_SECTIONS = (
     "Architecture",
     "Design decisions",
     "Data",
-    "Limitations",
+    "Where it fails",
 )
 PAGES = {"docs/MODEL_CARD.md": "model-card.html", "docs/PRODUCT.md": "product.html"}
 

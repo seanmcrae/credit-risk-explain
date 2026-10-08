@@ -140,10 +140,10 @@
     </section>
     {% endif %}
 
-    {% if sections.get("Limitations") %}
-    <section class="wrap prose" id="limitations">
-      <h2>Limitations</h2>
-{{ sections["Limitations"] | safe }}
+    {% if sections.get("Where it fails") %}
+    <section class="wrap prose" id="where-it-fails">
+      <h2>Where it fails</h2>
+{{ sections["Where it fails"] | safe }}
       <p>The <a href="model-card.html">model card</a> covers intended use, out-of-scope uses and limitations in full; the <a href="product.html">product brief</a> covers users, success metrics, risks and the roadmap.</p>
     </section>
     {% endif %}
