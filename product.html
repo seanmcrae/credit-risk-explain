@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product brief - credit-risk-explain</title>
+  <meta name="description" content="Calibrated, explainable default-risk ranking for a capacity-limited credit work queue, with reason codes, a fairness audit and a generated model card.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">credit-risk-explain</a>
+      <nav aria-label="Site">
+        <a href="index.html#results">Results</a>
+        <a href="index.html#fairness">Fairness</a>
+        <a href="index.html#architecture">Architecture</a>
+        <a href="model-card.html">Model card</a>
+        <a href="product.html" class="here">Product brief</a>
+        <a href="https://github.com/seanmcrae/credit-risk-explain">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <article class="wrap prose doc">
+      <p class="crumb"><a href="index.html">credit-risk-explain</a> / Product brief &middot; <a href="https://github.com/seanmcrae/credit-risk-explain/blob/main/docs/PRODUCT.md">view source</a></p>
+<h1>credit-risk-explain: product write-up</h1>
+<h2 id="problem">Problem</h2>
+<p>A card issuer's collections or early-outreach team can work a few hundred to a few thousand
+accounts per cycle out of a much larger book. Today that list is often built from one or two rules
+(&quot;anything 2+ months late&quot;, &quot;highest balance first&quot;). Rules like these leave value behind in two
+ways: they spend contacts on accounts that would have paid anyway, and they cannot say how many
+contacts are worth making. A risk model can rank better, but an unexplained score creates a new
+problem: analysts will not trust it, ops leads cannot staff against it, and compliance cannot sign
+off on it.</p>
+<p>The job is a ranking that is <strong>better than the rule, explainable per account, calibrated enough to
+reason about money, and auditable across customer groups</strong>, delivered with the evidence each
+stakeholder needs.</p>
+<h2 id="users-and-jobs-to-be-done">Users and jobs to be done</h2>
+<table>
+<thead>
+<tr>
+<th>User</th>
+<th>Job</th>
+<th>What they need from this tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Collections / risk analyst</td>
+<td>&quot;Tell me who to call first and why, so I can open the conversation well.&quot;</td>
+<td>Ordered queue, probability, decile, top reasons in plain language, per-account waterfall</td>
+</tr>
+<tr>
+<td>Ops lead</td>
+<td>&quot;How many agents do I need this cycle, and what do I lose if I'm short-staffed?&quot;</td>
+<td>Expected value by queue size, capture at a given capacity</td>
+</tr>
+<tr>
+<td>Model risk / compliance</td>
+<td>&quot;Can I defend this model to an examiner and to a customer?&quot;</td>
+<td>Model card generated from the run, protected attributes excluded and audited, monotone risk drivers, reason codes that only cite risk-increasing factors</td>
+</tr>
+<tr>
+<td>Data scientist (owner)</td>
+<td>&quot;Can I retrain, compare and promote without hand-editing reports?&quot;</td>
+<td>Config-driven pipeline, champion/challenger metrics side by side, deterministic runs, CI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="scope">Scope</h2>
+<p><strong>In:</strong></p>
+<ul>
+<li>Ranking accounts by probability of default next month from six months of statement history.</li>
+<li>Two models (interpretable baseline, gradient-boosted champion) with calibration.</li>
+<li>Queue economics under a configurable cost/benefit matrix.</li>
+<li>Per-account reason codes and global SHAP importance.</li>
+<li>Fairness slice audit and a generated model card.</li>
+<li>CLI for batch use, Streamlit viewer for analysts.</li>
+</ul>
+<p><strong>Out:</strong></p>
+<ul>
+<li>Credit approval, limit or pricing decisions.</li>
+<li>Treatment selection (which script, which channel) and uplift modelling.</li>
+<li>Real-time scoring service, case management integration, customer contact.</li>
+<li>Bias mitigation (reweighting, thresholds by group): the tool measures, a human decides.</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Requirement</th>
+<th>How it is met</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>Queue order beats a random and a linear baseline on a holdout the model never saw</td>
+<td>Stratified train / calibration / test split; both models scored on the same test set</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Probabilities are trustworthy enough to multiply by money</td>
+<td>Calibrator fitted on a separate split; ECE and reliability curve on holdout</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Every queued account carries reasons a human can read</td>
+<td>SHAP contributions grouped into seven reason codes; only risk-increasing groups are shown</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Risk drivers move in the defensible direction</td>
+<td>LightGBM monotone constraints on eight features, set in config, enforced by a test</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Protected attributes never influence the score</td>
+<td>Excluded from features by construction; test flips sex and age and checks scores are unchanged</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>Group differences are measured and published</td>
+<td>Priority rate, TPR/FPR at capacity, calibration gap and AUC per group, in the model card</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>Every number in the documentation comes from a run</td>
+<td><code>MODEL_CARD.md</code> is rendered from <code>metrics.json</code>; README figures are produced by <code>make train-uci</code></td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Runs are reproducible and CI needs no data download or keys</td>
+<td>Seeded split, deterministic LightGBM, synthetic sample for tests, lockfile</td>
+</tr>
+</tbody>
+</table>
+<h2 id="success-metrics-and-evals">Success metrics and evals</h2>
+<p>The tool measures itself on every training run; the targets below are the bar I would set for
+promoting a model in this setting. Current values are from the UCI holdout (6,000 accounts).</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Why it matters</th>
+<th>Target</th>
+<th>UCI run</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Capture at capacity: share of defaulters in the top 20%</td>
+<td>The number an ops lead staffs against</td>
+<td>Beats baseline model; &gt; 45%</td>
+<td>50.7% (baseline 48.2%)</td>
+</tr>
+<tr>
+<td>Precision in top 5%</td>
+<td>Analyst trust: the top of the list should mostly be real</td>
+<td>&gt; 70%</td>
+<td>77.0%</td>
+</tr>
+<tr>
+<td>Expected value at configured capacity</td>
+<td>Ties ranking quality to money under stated assumptions</td>
+<td>Higher than working everyone and higher than baseline</td>
+<td>197,200 vs 170,800 (everyone) and 184,000 (baseline)</td>
+</tr>
+<tr>
+<td>Calibration error (ECE, 10 bins)</td>
+<td>Probabilities feed the economics and the analyst's judgment</td>
+<td>&lt; 0.02</td>
+<td>0.010</td>
+</tr>
+<tr>
+<td>Score stability (PSI, development vs scoring population)</td>
+<td>Early warning that the population moved</td>
+<td>&lt; 0.1 stable, 0.1-0.25 investigate, &gt; 0.25 retrain</td>
+<td>0.002 (train vs holdout)</td>
+</tr>
+<tr>
+<td>TPR gap across groups at capacity</td>
+<td>Equally risky customers should be equally likely to be worked</td>
+<td>&lt; 0.10 per attribute, or documented and accepted</td>
+<td>sex 0.036, marriage 0.015, education 0.085, age band 0.180</td>
+</tr>
+<tr>
+<td>Max absolute calibration gap across groups</td>
+<td>Score means the same thing for every group</td>
+<td>&lt; 0.03</td>
+<td>0.029 (age band 18-24)</td>
+</tr>
+</tbody>
+</table>
+<p>The age-band TPR gap fails the target: defaulters aged 18-24 are prioritized at 60.6% versus 42.6%
+for 55+. In the holdout, defaulters aged 18-24 have a median credit limit of 50,000 against
+100,000 for 55+, and 55% of them are currently late against 50%. The model card's proxy screen
+shows how that reaches the score: among defaulters, credit limit adds 0.164 more log-odds for
+18-24 than for 55+ and recent payment status 0.088 more, partly offset by average utilization
+(0.173 less). Credit limit is the model's second-largest driver, so it acts as a partial proxy
+for age. Whether this is acceptable depends on what being worked means for the customer, which
+is why the gap is published rather than silently corrected.</p>
+<p>Evals that run on every commit (synthetic data): hand-computed KS, lift and expected-value cases,
+reason-code mapping, monotonicity of the constrained model, deterministic retraining, invariance
+to protected attributes, CLI and app smoke tests.</p>
+<h2 id="minimum-viable-quality">Minimum viable quality</h2>
+<p>Release thresholds for a retrained model, built on the targets in the table above. Do-not-ship is
+a hard stop; ship means every target is met; delight is the bar for a model I would promote with
+no caveats.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Do not ship</th>
+<th>Ship</th>
+<th>Delight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Capture at 20% capacity</td>
+<td>45% or less, or not above the baseline model</td>
+<td>Above 45% and above the baseline model</td>
+<td>Also above a rule-based queue (not yet scored, issue #4), on an out-of-time sample</td>
+</tr>
+<tr>
+<td>Precision in top 5%</td>
+<td>70% or less</td>
+<td>Above 70%</td>
+<td>Above 75% on an out-of-time sample</td>
+</tr>
+<tr>
+<td>Expected value at configured capacity</td>
+<td>Not above working everyone, or not above the baseline</td>
+<td>Above both</td>
+<td>Above both across a sensitivity band of cure rate and loss given default</td>
+</tr>
+<tr>
+<td>Calibrated ECE (10 bins)</td>
+<td>0.02 or more</td>
+<td>Below 0.02</td>
+<td>Below 0.01</td>
+</tr>
+<tr>
+<td>Score PSI, development vs scoring</td>
+<td>Above 0.25</td>
+<td>Below 0.1 (0.1-0.25: investigate before shipping)</td>
+<td>Below 0.1 on an out-of-time sample</td>
+</tr>
+<tr>
+<td>TPR gap per attribute at capacity</td>
+<td>0.10 or more with no recorded acceptance by the program owner</td>
+<td>Below 0.10, or documented and accepted</td>
+<td>Below 0.10 for every attribute, no exceptions</td>
+</tr>
+<tr>
+<td>Max absolute calibration gap across groups</td>
+<td>0.03 or more</td>
+<td>Below 0.03</td>
+<td>Below 0.02</td>
+</tr>
+</tbody>
+</table>
+<p>Against these thresholds the current UCI run meets ship on every row but one: the age-band TPR gap
+is 0.180. It is documented, but no acceptance is recorded (issue #3), so as it stands this model is
+do-not-ship until the program owner accepts the gap or a mitigation narrows it. The 18-24
+calibration gap (0.029) clears the bar by 0.001.</p>
+<h2 id="cost-at-1x-and-10x-usage">Cost at 1x and 10x usage</h2>
+<p>Estimates only. The repo's cost assumptions are the illustrative economics in
+<code>configs/default.yaml</code>: 60 per contact, 4,000 loss given default, a 10% cure rate if worked (so
+working an account pays off above a calibrated probability of 0.15). The config names no currency.
+1x is the UCI holdout: a book of 6,000 accounts per cycle at the 22.1% default rate, worked at 20%
+capacity. 10x assumes the same default rate and the same model performance on a book ten times the
+size, which is an assumption, not a measurement.</p>
+<table>
+<thead>
+<tr>
+<th>Per cycle</th>
+<th>1x (6,000 accounts)</th>
+<th>10x (60,000 accounts)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accounts worked at 20% capacity</td>
+<td>1,200</td>
+<td>12,000</td>
+</tr>
+<tr>
+<td>Contact cost</td>
+<td>72,000</td>
+<td>720,000</td>
+</tr>
+<tr>
+<td>Expected value at 20%, LightGBM</td>
+<td>197,200</td>
+<td>about 1,972,000</td>
+</tr>
+<tr>
+<td>Expected value at 20%, logistic-regression baseline</td>
+<td>184,000</td>
+<td>about 1,840,000</td>
+</tr>
+<tr>
+<td>Expected value of working every account</td>
+<td>170,800</td>
+<td>about 1,708,000</td>
+</tr>
+<tr>
+<td>Value-maximizing capacity, LightGBM</td>
+<td>3,102 accounts (51.7%), 237,880</td>
+<td>about 31,000 accounts, about 2,378,800</td>
+</tr>
+</tbody>
+</table>
+<p>Contact cost and value scale linearly because every figure is per account; what does not scale is
+team capacity, which is why the queue size is a staffing decision rather than a model output.
+Training and scoring run as a local batch job, and the repo has no compute cost assumption, so
+compute is not costed here.</p>
+<h2 id="trade-offs-and-alternatives-considered">Trade-offs and alternatives considered</h2>
+<ul>
+<li><strong>Interpretability vs accuracy.</strong> Logistic regression is easier to defend; LightGBM is
+materially better here (ROC-AUC 0.778 vs 0.738, capture at 20% 50.7% vs 48.2%). Monotone
+constraints plus SHAP close most of the explainability gap at no measured accuracy cost, so
+LightGBM is champion and the linear model stays as challenger and sanity check.</li>
+<li><strong>Which fairness definition.</strong> Demographic parity (equal priority rates) would force working
+lower-risk customers in some groups and fewer high-risk ones in others. Equal opportunity (equal
+TPR) is closer to &quot;equally risky people are treated alike&quot;. The tool reports both plus
+calibration by group and leaves the policy choice to the program owner.</li>
+<li><strong>Rank on calibrated vs raw score.</strong> Calibrated isotonic output ties whole blocks; ranking on it
+would throw away ordering information. Raw score for order, calibrated probability for
+decisions.</li>
+<li><strong>Isotonic vs Platt.</strong> Isotonic fits the non-linear miscalibration of boosted trees better;
+Platt is safer with small calibration sets. Both are a config switch. Isotonic levels are
+Laplace-smoothed so small extreme blocks do not report probability 1.0.</li>
+<li><strong>Stratified vs out-of-time split.</strong> Out-of-time is the right test for a production model, but
+the public data has a single observation month. The PSI check and <code>evaluate --data</code> are the
+hooks for an out-of-time sample.</li>
+<li><strong>Expected value from realized outcomes vs predicted probabilities.</strong> The holdout curve uses
+realized defaults (what would actually have happened); the app uses calibrated probabilities
+because a live queue has no labels yet.</li>
+</ul>
+<h2 id="risks">Risks</h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Mitigation in this repo</th>
+<th>Remaining exposure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Proxy discrimination through limit or utilization</td>
+<td>Group audit with TPR, FPR and calibration gaps</td>
+<td>Gaps are measured, not mitigated</td>
+</tr>
+<tr>
+<td>Placeholder economics drive staffing decisions</td>
+<td>Assumptions printed next to every value figure; all in config</td>
+<td>Real cure rates and losses must come from the business</td>
+</tr>
+<tr>
+<td>Model trained on 2005 Taiwan applied elsewhere</td>
+<td>Stated in model card and README limitations</td>
+<td>No transfer validation possible on public data</td>
+</tr>
+<tr>
+<td>Reason codes read as causal or as legal notices</td>
+<td>Wording and limitation text say they describe the model</td>
+<td>Legal review needed before customer-facing use</td>
+</tr>
+<tr>
+<td>Silent drift after deployment</td>
+<td>PSI computed every run; <code>evaluate --data</code> on new labeled files</td>
+<td>No scheduled monitoring yet (roadmap)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="roadmap">Roadmap</h2>
+<p><strong>Now (in this repo):</strong> calibrated champion/challenger ranking, queue economics, grouped reason
+codes, fairness audit, generated model card, CLI, Streamlit viewer, CI on Python 3.11 and 3.12.</p>
+<p><strong>Next:</strong></p>
+<ul>
+<li>Drift monitoring: per-feature and score PSI against the development sample on every scoring
+batch, with thresholds that open a retrain ticket.</li>
+<li>Champion/challenger promotion: a <code>compare</code> command that scores both bundles on the same new
+labeled month and promotes only if capture at capacity improves without widening group gaps.</li>
+<li>Out-of-time validation as soon as a dataset with an observation date is available.</li>
+<li>Capacity sensitivity: expected value bands across ranges of cure rate and loss given default.</li>
+</ul>
+<p><strong>Later:</strong></p>
+<ul>
+<li>Uplift modelling: rank by expected change in default from contact, not by default risk alone.</li>
+<li>Group-aware policy options (for example, TPR-equalizing capacity allocation) shown as explicit
+trade-off curves for the program owner to choose from.</li>
+<li>Reason-code stability tracking, so an account's stated reasons do not flip between cycles
+without a real change in its history.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="footer">
+    <div class="wrap">
+      <p>MIT licensed. Results computed on UCI Default of Credit Card Clients (30,000 rows) (UCI Machine Learning Repository, CC BY 4.0); the data is not redistributed. Independent portfolio project, not a production system.</p>
+      <p><a href="https://github.com/seanmcrae/credit-risk-explain">Source on GitHub</a> &middot; <a href="https://github.com/seanmcrae/credit-risk-explain/blob/main/CHANGELOG.md">Changelog</a> &middot; <a href="https://github.com/seanmcrae/credit-risk-explain/blob/main/CONTRIBUTING.md">Contributing</a></p>
+    </div>
+  </footer>
+</body>
+</html>

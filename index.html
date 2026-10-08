@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>credit-risk-explain</title>
+  <meta name="description" content="Calibrated, explainable default-risk ranking for a capacity-limited credit work queue, with reason codes, a fairness audit and a generated model card.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">credit-risk-explain</a>
+      <nav aria-label="Site">
+        <a href="index.html#results" class="here">Results</a>
+        <a href="index.html#fairness">Fairness</a>
+        <a href="index.html#architecture">Architecture</a>
+        <a href="model-card.html">Model card</a>
+        <a href="product.html">Product brief</a>
+        <a href="https://github.com/seanmcrae/credit-risk-explain">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Explainable credit risk ranking</p>
+          <h1>Work the riskiest accounts first, and say why for each one.</h1>
+          <p class="lede">Ranks a capacity-limited collections or outreach queue by calibrated default risk, attaches plain-language reason codes to every account, sizes the queue from an explicit cost/benefit matrix, and publishes a fairness audit and model card generated from the same run.</p>
+          <p class="cta">
+            <a class="button primary" href="https://github.com/seanmcrae/credit-risk-explain">View on GitHub</a>
+            <a class="button" href="model-card.html">Model card</a>
+            <a class="button" href="#quickstart">Quickstart</a>
+          </p>
+        </div>
+        <figure class="hero-chart">
+          <img src="img/lift_curve.png" alt="Cumulative capture of defaulters by share of accounts worked, LightGBM versus logistic regression">
+          <figcaption>LightGBM captures 50.7% of next-month defaulters in the riskiest 20% of the holdout queue (logistic regression: 48.2%).</figcaption>
+        </figure>
+      </div>
+      <div class="wrap">
+        <dl class="tiles">
+          <div class="tile"><dt>Defaulters captured in top 20%</dt><dd>50.7%</dd><p>baseline 48.2%</p></div>
+          <div class="tile"><dt>ROC-AUC</dt><dd>0.778</dd><p>baseline 0.738</p></div>
+          <div class="tile"><dt>Calibration error (ECE)</dt><dd>0.010</dd><p>0.016 before calibration</p></div>
+          <div class="tile warn"><dt>Largest group TPR gap</dt><dd>18.0 pts</dd><p>age_band 18-24 60.6% vs 55+ 42.6%</p></div>
+        </dl>
+        <p class="note">Holdout of 6,000 accounts from UCI Default of Credit Card Clients (30,000 rows), stratified split. Every figure on this page is read from the committed results of that run.</p>
+      </div>
+    </section>
+
+    <section class="wrap prose" id="features">
+      <h2>Features</h2>
+<ul>
+<li><strong>Two models, one holdout.</strong> Logistic-regression baseline and LightGBM with monotone
+constraints on the risk drivers an analyst would defend, scored on the same stratified test set.</li>
+<li><strong>Calibrated probabilities.</strong> Laplace-smoothed isotonic (or Platt) calibration fitted on its own
+split, with ECE and reliability curves.</li>
+<li><strong>Reason codes on every account.</strong> Exact SHAP contributions grouped into seven plain-language
+reasons; only reasons that raise risk are cited.</li>
+<li><strong>Queue economics.</strong> Expected value by queue size under a configurable contact cost, loss given
+default and cure rate, with the value-maximizing capacity.</li>
+<li><strong>Fairness audit.</strong> Priority rate, TPR and FPR at capacity, calibration gap and AUC for sex, age
+band, education and marital status, plus a proxy screen that traces the largest gap to features.</li>
+<li><strong>Generated model card.</strong> Every number in <a href="model-card.html">docs/MODEL_CARD.md</a> is rendered
+from the run's <code>metrics.json</code>.</li>
+<li><strong>CLI, app and docs site.</strong> <code>credit-rank</code> for batch use, a Streamlit viewer for analysts, and an
+offline static site deployed to GitHub Pages.</li>
+</ul>
+
+    </section>
+
+    <section class="wrap prose" id="quickstart">
+      <h2>Quickstart</h2>
+<p>Requires Python 3.11+, <a href="https://docs.astral.sh/uv/">uv</a> and <code>make</code>. One command trains, ranks
+and explains on the bundled synthetic sample:</p>
+<pre><code class="language-bash">git clone https://github.com/seanmcrae/credit-risk-explain.git &amp;&amp; cd credit-risk-explain &amp;&amp; make install demo
+</code></pre>
+<p>Then:</p>
+<pre><code class="language-bash">make app            # Streamlit queue viewer on http://localhost:8501
+make train-uci      # download UCI data (about 5 MB, checksum-verified, never committed),
+                    # train, and regenerate docs/MODEL_CARD.md, docs/img/ and docs/results/
+make site           # build the docs site into site/ (offline)
+make check          # lint, format check, mypy, tests: the same gates as CI
+</code></pre>
+<p>The CLI covers the rest of the workflow:</p>
+<pre><code class="language-bash">uv run credit-rank train    --data data/raw/uci_credit_default.csv --out artifacts/uci
+uv run credit-rank evaluate --artifacts artifacts/uci                    # saved holdout metrics
+uv run credit-rank evaluate --artifacts artifacts/uci --data new.csv     # score a labeled file, PSI vs holdout
+uv run credit-rank rank     --artifacts artifacts/uci --capacity 1200    # writes queue.csv
+uv run credit-rank explain 16555 --artifacts artifacts/uci --plot waterfall.png
+uv run credit-rank model-card --artifacts artifacts/uci --out docs/MODEL_CARD.md --img-dir img
+</code></pre>
+<p><code>docker build -t credit-risk-explain . &amp;&amp; docker run -p 8501:8501 credit-risk-explain</code> trains on
+the synthetic sample at build time and serves the app.</p>
+
+    </section>
+
+    <section class="wrap prose" id="results">
+      <h2>Results</h2>
+      <p>UCI Default of Credit Card Clients (30,000 rows): 19,500 training, 4,500 calibration and 6,000 holdout accounts. LightGBM with monotone constraints is the champion; logistic regression is the baseline.</p>
+      <table>
+        <thead><tr><th>Holdout metric</th><th>LightGBM</th><th>Logistic regression</th></tr></thead>
+        <tbody>
+          <tr><td>ROC-AUC</td><td>0.778</td><td>0.738</td></tr>
+          <tr><td>PR-AUC</td><td>0.557</td><td>0.504</td></tr>
+          <tr><td>KS</td><td>0.429</td><td>0.387</td></tr>
+          <tr><td>Top-decile lift</td><td>3.13</td><td>2.93</td></tr>
+          <tr><td>Precision in top 1% of queue</td><td>86.7%</td><td>75.0%</td></tr>
+          <tr><td>Precision in top 5% of queue</td><td>77.0%</td><td>70.7%</td></tr>
+          <tr><td>Precision in top 10% of queue</td><td>69.2%</td><td>64.8%</td></tr>
+          <tr><td>Precision in top 20% of queue</td><td>56.1%</td><td>53.3%</td></tr>
+          <tr><td>Defaulters captured in top 20%</td><td>50.7%</td><td>48.2%</td></tr>
+          <tr><td>Calibrated ECE</td><td>0.010</td><td>0.009</td></tr>
+          <tr><td>Brier score</td><td>0.135</td><td>0.143</td></tr>
+          <tr><td>Expected value at 20% capacity (illustrative)</td><td>197,200</td><td>184,000</td></tr>
+        </tbody>
+      </table>
+      <div class="grid2">
+        <figure><img src="img/reliability_curve.png" alt="Reliability curve"><figcaption>Isotonic calibration fitted on a separate split: ECE 0.010 after, 0.016 before.</figcaption></figure>
+        <figure><img src="img/expected_value.png" alt="Expected value by queue size"><figcaption>Under the illustrative economics in <code>configs/default.yaml</code>, value peaks at 3,102 accounts (51.7% of the holdout).</figcaption></figure>
+      </div>
+      <h3 id="lift-by-decile">Lift by decile (LightGBM)</h3>
+      <table>
+        <thead><tr><th>Decile</th><th>Accounts</th><th>Defaults</th><th>Default rate</th><th>Lift</th><th>Cum. capture</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>600</td><td>415</td><td>69.2%</td><td>3.13</td><td>31.3%</td></tr>
+          <tr><td>2</td><td>600</td><td>258</td><td>43.0%</td><td>1.94</td><td>50.7%</td></tr>
+          <tr><td>3</td><td>600</td><td>158</td><td>26.3%</td><td>1.19</td><td>62.6%</td></tr>
+          <tr><td>4</td><td>600</td><td>109</td><td>18.2%</td><td>0.82</td><td>70.8%</td></tr>
+          <tr><td>5</td><td>600</td><td>101</td><td>16.8%</td><td>0.76</td><td>78.4%</td></tr>
+          <tr><td>6</td><td>600</td><td>91</td><td>15.2%</td><td>0.69</td><td>85.3%</td></tr>
+          <tr><td>7</td><td>600</td><td>67</td><td>11.2%</td><td>0.50</td><td>90.4%</td></tr>
+          <tr><td>8</td><td>600</td><td>60</td><td>10.0%</td><td>0.45</td><td>94.9%</td></tr>
+          <tr><td>9</td><td>600</td><td>44</td><td>7.3%</td><td>0.33</td><td>98.2%</td></tr>
+          <tr><td>10</td><td>600</td><td>24</td><td>4.0%</td><td>0.18</td><td>100.0%</td></tr>
+        </tbody>
+      </table>
+      <figure class="wide"><img src="img/shap_summary.png" alt="SHAP summary of feature contributions on the holdout"><figcaption>Exact TreeSHAP contributions in log-odds. Reason codes group these features and cite only the groups that raise an account's risk.</figcaption></figure>
+      <figure class="wide"><img src="img/queue_dashboard.png" alt="Static queue dashboard: top of the queue, one account's waterfall, capture and reliability"><figcaption>The top of the holdout queue with the first account's SHAP waterfall, as the CLI and Streamlit viewer present it.</figcaption></figure>
+      <p>Score PSI between training and holdout is 0.002. Full definitions and every table are in the <a href="model-card.html">model card</a>.</p>
+      <h3 id="how-evaluation-works">How evaluation works</h3>
+<ul>
+<li><strong>Split.</strong> Stratified train / calibration / test (65% / 15% / 20%, seed 42). Models never see
+the calibration or test rows; the calibrator never sees the test rows.</li>
+<li><strong>Ranking quality.</strong> ROC-AUC, PR-AUC and KS on the raw score; lift and cumulative capture by
+decile; precision at the top 1%, 5%, 10% and 20% of the queue.</li>
+<li><strong>Probability quality.</strong> Brier score and 10-bin ECE before and after calibration, plus a
+reliability curve.</li>
+<li><strong>Decision value.</strong> For every queue size, expected value from realized holdout outcomes:
+defaulters worked times cure rate times loss given default, minus contact cost for every account
+worked. Capacity for the headline numbers is 20% of the holdout.</li>
+<li><strong>Fairness.</strong> At the same 20% capacity, per group: priority rate, TPR and FPR, calibration gap
+and AUC. Slices under 100 accounts are flagged and excluded from the summary. For the attribute
+with the widest TPR gap, mean SHAP contributions among each group's defaulters show which
+features carry it.</li>
+<li><strong>Stability.</strong> PSI of champion scores between training and holdout; <code>evaluate --data</code> reports
+PSI for any new labeled file.</li>
+<li><strong>Tests.</strong> Hand-computed cases for KS, lift, expected value and the fairness metrics; SHAP
+additivity; monotonicity; determinism; invariance of scores to protected attributes; CLI, app
+and site smoke tests. All offline, on synthetic data.</li>
+</ul>
+
+    </section>
+
+    <section class="wrap prose" id="fairness">
+      <h2>Fairness findings</h2>
+      <p>Sex, age, education and marital status never enter the model; they are joined back only for the audit. "Priority" means falling inside the top 20% of the holdout queue. The audit reports selection parity and error-rate parity side by side, because being worked can be a burden (collections contact) or a benefit (early hardship outreach) depending on the program.</p>
+      <table>
+        <thead><tr><th>Attribute</th><th>Priority-rate ratio</th><th>TPR gap</th><th>FPR gap</th><th>Max abs calibration gap</th></tr></thead>
+        <tbody>
+          <tr><td>age_band</td><td>0.65</td><td>0.180</td><td>0.077</td><td>0.029</td></tr>
+          <tr><td>education</td><td>0.67</td><td>0.085</td><td>0.053</td><td>0.008</td></tr>
+          <tr><td>marriage</td><td>0.95</td><td>0.015</td><td>0.002</td><td>0.023</td></tr>
+          <tr><td>sex</td><td>0.94</td><td>0.036</td><td>0.016</td><td>0.011</td></tr>
+        </tbody>
+      </table>
+      <p class="callout">The largest gap is on <strong>age_band</strong>: 60.6% of defaulters in 18-24 are prioritized versus 42.6% for 55+. The repository measures and publishes this gap; it does not apply a mitigation.</p>
+      <h3 id="where-the-gap-comes-from">Where the gap comes from</h3>
+      <p>Mean SHAP contribution (log-odds) among each group's defaulters, for the features that differ most between the two groups. A positive difference moves 18-24 defaulters up the queue. This is a proxy screen, not a causal decomposition.</p>
+      <table>
+        <thead><tr><th>Feature</th><th>18-24</th><th>55+</th><th>Difference</th></tr></thead>
+        <tbody>
+          <tr><td><code>utilization_mean</code></td><td>-0.100</td><td>+0.073</td><td>-0.173</td></tr>
+          <tr><td><code>log_limit</code></td><td>+0.261</td><td>+0.098</td><td>+0.164</td></tr>
+          <tr><td><code>payment_to_limit_mean</code></td><td>-0.040</td><td>+0.060</td><td>-0.100</td></tr>
+          <tr><td><code>pay_status_recent</code></td><td>+0.439</td><td>+0.351</td><td>+0.088</td></tr>
+        </tbody>
+      </table>
+      <figure class="wide"><img src="img/fairness.png" alt="TPR at capacity by group, and feature contributions behind the largest gap"></figure>
+      <p class="note">Slices under 100 accounts are shown in grey and left out of the summary: education: other/unknown (82), marriage: other/unknown (75).</p>
+      <p>Per-group default rates, priority rates, TPR, calibration gaps and AUC are in the <a href="model-card.html#fairness-audit">model card's fairness audit</a>.</p>
+    </section>
+
+    <section class="wrap prose" id="example-output">
+      <h2>Example output</h2>
+      <p><code>make demo</code> on the bundled <strong>synthetic</strong> sample, captured when this site was built. Synthetic numbers say nothing about real-world performance.</p>
+      <pre class="terminal"><code>$ make demo
+Data: bundled synthetic sample (5,000 rows)  rows=5,000  default rate=21.9%
+Holdout: 1,000 accounts. Champion: LightGBM
+LightGBM             AUC=0.778  PR-AUC=0.550  KS=0.418  lift@D1=3.20  ECE=0.029
+                     P@1%=0.700  P@5%=0.760  P@10%=0.700  P@20%=0.555
+Logistic regression  AUC=0.786  PR-AUC=0.569  KS=0.460  lift@D1=3.29  ECE=0.028
+                     P@1%=0.800  P@5%=0.780  P@10%=0.720  P@20%=0.550
+Expected value @ 200 accounts: 32,400   value-maximizing capacity: 600 (60.0%) -&gt; 40,800
+Score PSI train vs holdout: 0.0049
+Artifacts in artifacts/demo
+Queue of 50 of 1,000 accounts -&gt; artifacts/demo/queue.csv
+ rank   id  probability  decile    reason_codes                                  primary_reason
+    1 2185        0.800       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    2 2165        0.800       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    3 3081        0.800       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    4 3813        0.800       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    5 3153        0.765       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    6 1855        0.750       1 R03;R05;R01;R02        Balance is high relative to credit limit
+    7 2646        0.750       1 R03;R01;R05;R02        Balance is high relative to credit limit
+    8 3465        0.750       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+    9 2341        0.750       1 R01;R05;R03;R02                 Most recent payment is past due
+   10 3334        0.750       1 R05;R01;R03;R02 Payments are small relative to the balance owed
+Account 2185: P(default)=0.800  decile=1
+Reasons:
+  R05 Payments are small relative to the balance owed  [payment_to_limit_mean=0.00, +1.66]
+  R01 Most recent payment is past due  [pay_status_recent=4.00, +1.01]
+  R03 Balance is high relative to credit limit  [utilization_recent=0.90, +0.75]
+  R02 Repeated or ongoing delinquency in the last six months  [delinquency_streak=6.00, +0.42]
+Largest contributions (log-odds):
+  +0.958  Repayment status last month (k = months late) = 4.00
+  +0.907  Last statement balance divided by credit limit = 0.90
+  +0.724  Average payment divided by credit limit = 0.00
+  +0.527  Average payment as a share of the prior statement balance = 0.00
+  +0.405  Last payment as a share of the prior statement balance = 0.00
+  -0.396  Average six-month balance-to-limit ratio = 0.92</code></pre>
+    </section>
+
+    <section class="wrap prose" id="architecture">
+      <h2>Architecture</h2>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 698" class="flowchart" role="img" aria-label="Pipeline architecture">
+<title>Pipeline architecture</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fc-arrow"/></marker></defs>
+<path class="fc-edge" d="M340.0,62.0 C340.0,79.0 340.0,79.0 340.0,96.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,130.0 C340.0,151.0 226.0,151.0 226.0,172.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,130.0 C340.0,147.0 454.0,147.0 454.0,164.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M226.0,206.0 C226.0,227.0 340.0,227.0 340.0,248.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,298.0 C340.0,319.0 226.0,319.0 226.0,340.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,298.0 C340.0,315.0 454.0,315.0 454.0,332.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M226.0,374.0 C226.0,395.0 226.0,395.0 226.0,416.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M454.0,382.0 C454.0,399.0 226.0,399.0 226.0,416.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M226.0,466.0 C226.0,483.0 112.0,483.0 112.0,500.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M226.0,466.0 C226.0,483.0 340.0,483.0 340.0,500.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M454.0,382.0 C454.0,399.0 454.0,399.0 454.0,416.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M454.0,214.0 C454.0,361.0 568.0,361.0 568.0,508.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M226.0,466.0 C226.0,487.0 568.0,487.0 568.0,508.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M112.0,550.0 C112.0,567.0 340.0,567.0 340.0,584.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,550.0 C340.0,567.0 340.0,567.0 340.0,584.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M454.0,466.0 C454.0,525.0 340.0,525.0 340.0,584.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M568.0,542.0 C568.0,563.0 340.0,563.0 340.0,584.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,618.0 C340.0,635.0 112.0,635.0 112.0,652.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,618.0 C340.0,635.0 340.0,635.0 340.0,652.0" marker-end="url(#arrow)"/>
+<path class="fc-edge" d="M340.0,618.0 C340.0,635.0 568.0,635.0 568.0,652.0" marker-end="url(#arrow)"/>
+<g class="fc-node"><rect x="240.0" y="12.0" width="200" height="50" rx="6"/>
+<text x="340.0" y="33.5">UCI download or synthetic</text>
+<text x="340.0" y="49.5">generator</text>
+</g>
+<g class="fc-node"><rect x="240.0" y="96.0" width="200" height="34" rx="6"/>
+<text x="340.0" y="117.5">pandera schema validation</text>
+</g>
+<g class="fc-node"><rect x="126.0" y="172.0" width="200" height="34" rx="6"/>
+<text x="226.0" y="193.5">Row-wise feature engineering</text>
+</g>
+<g class="fc-node"><rect x="354.0" y="164.0" width="200" height="50" rx="6"/>
+<text x="454.0" y="185.5">Audit groups: sex, age band,</text>
+<text x="454.0" y="201.5">education, marriage</text>
+</g>
+<g class="fc-node"><rect x="240.0" y="248.0" width="200" height="50" rx="6"/>
+<text x="340.0" y="269.5">Stratified split: train /</text>
+<text x="340.0" y="285.5">calibration / test</text>
+</g>
+<g class="fc-node"><rect x="126.0" y="340.0" width="200" height="34" rx="6"/>
+<text x="226.0" y="361.5">Logistic regression baseline</text>
+</g>
+<g class="fc-node"><rect x="354.0" y="332.0" width="200" height="50" rx="6"/>
+<text x="454.0" y="353.5">LightGBM with monotone</text>
+<text x="454.0" y="369.5">constraints</text>
+</g>
+<g class="fc-node"><rect x="126.0" y="416.0" width="200" height="50" rx="6"/>
+<text x="226.0" y="437.5">Calibrator fitted on</text>
+<text x="226.0" y="453.5">calibration split</text>
+</g>
+<g class="fc-node"><rect x="354.0" y="416.0" width="200" height="50" rx="6"/>
+<text x="454.0" y="437.5">SHAP attributions and reason</text>
+<text x="454.0" y="453.5">codes</text>
+</g>
+<g class="fc-node"><rect x="12.0" y="500.0" width="200" height="50" rx="6"/>
+<text x="112.0" y="521.5">Holdout evaluation: AUC, KS,</text>
+<text x="112.0" y="537.5">lift, precision at k, ECE, PSI</text>
+</g>
+<g class="fc-node"><rect x="240.0" y="500.0" width="200" height="50" rx="6"/>
+<text x="340.0" y="521.5">Queue economics: value by</text>
+<text x="340.0" y="537.5">capacity</text>
+</g>
+<g class="fc-node"><rect x="468.0" y="508.0" width="200" height="34" rx="6"/>
+<text x="568.0" y="529.5">Fairness slice audit</text>
+</g>
+<g class="fc-node"><rect x="240.0" y="584.0" width="200" height="34" rx="6"/>
+<text x="340.0" y="605.5">metrics.json and charts</text>
+</g>
+<g class="fc-node"><rect x="12.0" y="652.0" width="200" height="34" rx="6"/>
+<text x="112.0" y="673.5">MODEL_CARD.md</text>
+</g>
+<g class="fc-node"><rect x="240.0" y="652.0" width="200" height="34" rx="6"/>
+<text x="340.0" y="673.5">CLI: rank and explain</text>
+</g>
+<g class="fc-node"><rect x="468.0" y="652.0" width="200" height="34" rx="6"/>
+<text x="568.0" y="673.5">Streamlit queue viewer</text>
+</g>
+</svg><details><summary>Mermaid source</summary><pre><code>flowchart TB
+    A[&quot;UCI download or synthetic generator&quot;] --&gt; B[&quot;pandera schema validation&quot;]
+    B --&gt; C[&quot;Row-wise feature engineering&quot;]
+    B --&gt; G[&quot;Audit groups: sex, age band, education, marriage&quot;]
+    C --&gt; D[&quot;Stratified split: train / calibration / test&quot;]
+    D --&gt; E1[&quot;Logistic regression baseline&quot;]
+    D --&gt; E2[&quot;LightGBM with monotone constraints&quot;]
+    E1 --&gt; F[&quot;Calibrator fitted on calibration split&quot;]
+    E2 --&gt; F
+    F --&gt; H[&quot;Holdout evaluation: AUC, KS, lift, precision at k, ECE, PSI&quot;]
+    F --&gt; I[&quot;Queue economics: value by capacity&quot;]
+    E2 --&gt; J[&quot;SHAP attributions and reason codes&quot;]
+    G --&gt; K[&quot;Fairness slice audit&quot;]
+    F --&gt; K
+    H --&gt; L[&quot;metrics.json and charts&quot;]
+    I --&gt; L
+    J --&gt; L
+    K --&gt; L
+    L --&gt; M[&quot;MODEL_CARD.md&quot;]
+    L --&gt; N[&quot;CLI: rank and explain&quot;]
+    L --&gt; O[&quot;Streamlit queue viewer&quot;]</code></pre></details></figure>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema.py</code>, <code>data.py</code>, <code>download.py</code></td>
+<td>Canonical columns, pandera validation, UCI download with SHA-256 check, audit-group decoding</td>
+</tr>
+<tr>
+<td><code>synthetic.py</code></td>
+<td>Seeded synthetic accounts with the same schema</td>
+</tr>
+<tr>
+<td><code>features.py</code></td>
+<td>14 leakage-safe features; protected attributes excluded by construction</td>
+</tr>
+<tr>
+<td><code>models.py</code></td>
+<td>Stratified split, both models, Laplace-smoothed isotonic or Platt calibration</td>
+</tr>
+<tr>
+<td><code>metrics.py</code>, <code>evaluation.py</code></td>
+<td>KS, lift and capture, precision@k, expected value curve, ECE, PSI</td>
+</tr>
+<tr>
+<td><code>explain.py</code></td>
+<td>TreeSHAP / linear SHAP and grouped reason codes</td>
+</tr>
+<tr>
+<td><code>fairness.py</code></td>
+<td>Per-group priority rate, TPR/FPR at capacity, calibration gap, slice AUC</td>
+</tr>
+<tr>
+<td><code>queue.py</code></td>
+<td>Saved model bundle, queue building, single-account explanations</td>
+</tr>
+<tr>
+<td><code>pipeline.py</code>, <code>model_card.py</code>, <code>plots.py</code>, <code>cli.py</code></td>
+<td>Orchestration, generated model card, charts, typer CLI</td>
+</tr>
+<tr>
+<td><code>docsite/</code></td>
+<td>Offline static site: README sections, rendered docs, results snapshot, SVG diagram</td>
+</tr>
+</tbody>
+</table>
+
+    </section>
+
+    <section class="wrap prose" id="design-decisions">
+      <h2>Design decisions</h2>
+<ul>
+<li><strong>Rank on the raw score, report the calibrated probability.</strong> Isotonic calibration is a step
+function, so ranking on it would tie large blocks at the top of the queue (on the UCI holdout the
+top calibrated level, 0.861, covers 61 accounts). The raw score orders the queue; the calibrated
+probability feeds display, expected value and calibration audits. Deciles are cut on holdout
+scores and stored in the bundle, so &quot;decile 1&quot; means the same thing in every scoring batch.</li>
+<li><strong>Smoothed isotonic calibration.</strong> Plain isotonic regression returns exactly 1.0 for a small
+pure block at the top. Each block's level is <code>(defaults + 1) / (accounts + 2)</code> instead, which
+leaves large blocks unchanged and stops the queue from claiming certainty.</li>
+<li><strong>Monotone constraints on the risk drivers an analyst would defend</strong> (months late, delinquency
+counts, utilization, missed payments up; payment ratio down). On the UCI run they cost nothing:
+AUC 0.778 with eight constraints against 0.777 with six. They also remove explanations such as
+&quot;an older late payment lowered risk&quot; that come from collinear delinquency features.</li>
+<li><strong>Reason codes group correlated features.</strong> Three utilization features would otherwise split
+credit and crowd out other reasons. Groups are netted, and only groups that raise risk are
+returned, matching what an adverse-action reason has to explain.</li>
+<li><strong>Capacity is a decision, not a parameter.</strong> The expected-value curve is computed from realized
+holdout outcomes under the configured contact cost, loss given default and cure rate. Those
+figures are illustrative and live in <code>configs/default.yaml</code>.</li>
+<li><strong>Protected attributes are audit-only.</strong> They never enter <code>features.py</code>, and a test flips sex and
+age on scored accounts to confirm probabilities do not move. The audit reports selection-rate
+and error-rate parity side by side, because being prioritized can be a burden (collections
+contact) or a benefit (hardship outreach) depending on the program.</li>
+<li><strong>Stratified, not out-of-time, split.</strong> The source is one six-month snapshot with no time axis.
+The PSI check and <code>evaluate --data</code> are where an out-of-time sample would plug in.</li>
+</ul>
+
+    </section>
+
+    <section class="wrap prose" id="data">
+      <h2>Data</h2>
+<ul>
+<li><strong>Real:</strong> <a href="https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients">UCI Machine Learning Repository, Default of Credit Card Clients</a>,
+30,000 Taiwanese card holders, April-September 2005, licensed CC BY 4.0. Cite: Yeh, I. C., &amp;
+Lien, C. H. (2009). The comparisons of data mining techniques for the predictive accuracy of
+probability of default of credit card clients. <em>Expert Systems with Applications</em>, 36(2),
+2473-2480. <code>scripts/download_uci.py</code> verifies the archive's SHA-256 and writes
+<code>data/raw/uci_credit_default.csv</code>, which is git-ignored.</li>
+<li><strong>Synthetic:</strong> <code>data/sample/synthetic_credit_5k.csv</code> is 5,000 <strong>synthetic</strong> accounts from
+<code>generate_synthetic(5000, seed=7)</code>. Relationships are hand-specified to be plausible, not fitted
+to the real data. Tests and CI use synthetic data only; no test touches the network.</li>
+</ul>
+
+    </section>
+
+    <section class="wrap prose" id="where-it-fails">
+      <h2>Where it fails</h2>
+<p>Read from the UCI holdout snapshot at 20% capacity. The fairness audit drops slices under 100
+accounts from its summary; they are listed here because that is where the model is weakest.</p>
+<p><strong>Model and data limits</strong></p>
+<table>
+<thead>
+<tr>
+<th>Slice or failure mode</th>
+<th>Holdout evidence</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Age 18-24 vs 55+</td>
+<td>TPR 0.606 vs 0.426 (gap 0.180, target &lt; 0.10); 18-24 calibration gap 0.029 against a 0.03 limit</td>
+<td>Young defaulters are worked far more often; traced mainly to credit limit acting as a partial proxy for age</td>
+</tr>
+<tr>
+<td>Age 55+</td>
+<td>227 accounts</td>
+<td>Smallest audited age slice; no confidence intervals are reported, so its TPR is a noisy point estimate</td>
+</tr>
+<tr>
+<td>Education: high school</td>
+<td>AUC 0.734 (1,014 accounts) vs 0.78-0.79 for university and graduate school</td>
+<td>Weakest ranking among the audited slices</td>
+</tr>
+<tr>
+<td>Education: other/unknown</td>
+<td>AUC 0.551, calibration gap 0.099 (82 accounts, excluded from the summary)</td>
+<td>Ranking is close to random and probabilities run high for this group</td>
+</tr>
+<tr>
+<td>Marriage: other/unknown</td>
+<td>AUC 0.679, calibration gap 0.072 (75 accounts, excluded from the summary)</td>
+<td>Same pattern, smaller</td>
+</tr>
+<tr>
+<td>Top of the queue</td>
+<td>Precision 86.7% in the top 1%, 69.2% in the top 10%, 56.1% in the top 20%</td>
+<td>Most of a 20% queue's contacts are still non-defaulters</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Design and scaffolding limits</strong></p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stratified split of one six-month 2005 snapshot</td>
+<td>No out-of-time test; the PSI of 0.002 compares train with a holdout from the same period, so it cannot show drift</td>
+</tr>
+<tr>
+<td>Baselines are LightGBM vs logistic regression only</td>
+<td>No rule-based queue (&quot;2+ months late&quot;, &quot;highest balance first&quot;) is scored, so the gain over current practice is not measured</td>
+</tr>
+<tr>
+<td>Champion is fixed in config</td>
+<td>On the bundled synthetic sample, logistic regression scores higher (AUC 0.786 vs 0.778) and LightGBM is still the champion</td>
+</tr>
+<tr>
+<td>Economics are placeholders</td>
+<td>Expected value and the value-maximizing capacity move with the contact cost, loss given default and cure rate in config</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Considered and rejected.</strong> Ranking the queue on the calibrated probability. Isotonic calibration
+is a step function, so on the UCI holdout its top level (0.861) ties 61 accounts and throws away
+ordering inside the block. The queue ranks on the raw score and uses the calibrated probability
+for display, economics and audits (see Design decisions and PRODUCT.md).</p>
+<p><strong>Known limitations</strong></p>
+<ul>
+<li>One 2005 snapshot from one market: no out-of-time validation, seasonality or drift, and no
+claim that the model transfers to another portfolio.</li>
+<li>The target is next-month default. The queue ranks who is likely to default, not who will
+respond to contact; an uplift model would be the right target for outreach.</li>
+<li>The economics are placeholders and drive the recommended capacity.</li>
+<li>On the UCI holdout, defaulters aged 18-24 are prioritized at 60.6% versus 42.6% for 55+ at 20%
+capacity. The model card's proxy screen traces it mainly to credit limit (+0.164 log-odds for
+18-24 defaulters relative to 55+) and recent payment status (+0.088), partly offset by
+utilization (-0.173). The repository measures the gap; it does not apply a mitigation.</li>
+<li>Reason codes explain the model, not the customer's situation, and are not legal adverse-action
+notices.</li>
+</ul>
+
+      <p>The <a href="model-card.html">model card</a> covers intended use, out-of-scope uses and limitations in full; the <a href="product.html">product brief</a> covers users, success metrics, risks and the roadmap.</p>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="wrap">
+      <p>MIT licensed. Results computed on UCI Default of Credit Card Clients (30,000 rows) (UCI Machine Learning Repository, CC BY 4.0); the data is not redistributed. Independent portfolio project, not a production system.</p>
+      <p><a href="https://github.com/seanmcrae/credit-risk-explain">Source on GitHub</a> &middot; <a href="https://github.com/seanmcrae/credit-risk-explain/blob/main/CHANGELOG.md">Changelog</a> &middot; <a href="https://github.com/seanmcrae/credit-risk-explain/blob/main/CONTRIBUTING.md">Contributing</a></p>
+    </div>
+  </footer>
+</body>
+</html>
