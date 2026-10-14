@@ -1,5 +1,5 @@
 # Trains on the bundled synthetic sample at build time and serves the Streamlit queue viewer.
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # LightGBM needs the OpenMP runtime.
 RUN apt-get update \
